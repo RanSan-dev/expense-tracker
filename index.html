@@ -34,6 +34,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -472,9 +474,6 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
       },
       className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
     }, "Email Report"),
-      },
-      className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
-    }, "Email Report"),
 
     // ATM DISPLAY (NEW)
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
@@ -576,8 +575,6 @@ window.onload = () => {
     );
   }
 };
-
-
 
     </script>
   </body>

@@ -14,14 +14,15 @@
     <div id="root"></div>
 
     <script>
-   const { useState, useEffect } = React;
+   // 🌐 PHASE 2: FULL SETUP / CONTROL PANEL ADDED
+
+const { useState, useEffect } = React;
 
 function ExpenseTracker() {
   const [expenses, setExpenses] = useState([]);
-  const [categories, setCategories] = useState([
-    { name: "Food", budget: 500 },
-    { name: "Gas", budget: 300 }
-  ]);
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState({ name: "", budget: "" });
+  const [view, setView] = useState("dashboard");
 
   const [form, setForm] = useState({ date: "", vendor: "", amount: "", category: "", type: "card" });
   const [editingIndex, setEditingIndex] = useState(null);
@@ -41,6 +42,22 @@ function ExpenseTracker() {
   useEffect(() => {
     localStorage.setItem("expenseCategories", JSON.stringify(categories));
   }, [categories]);
+
+  const addCategory = () => {
+    if (!newCategory.name || !newCategory.budget) return;
+    if (categories.length >= 10) {
+      alert("Max 10 categories");
+      return;
+    }
+    setCategories([...categories, { name: newCategory.name, budget: parseFloat(newCategory.budget) }]);
+    setNewCategory({ name: "", budget: "" });
+  };
+
+  const deleteCategory = (i) => {
+    const updated = [...categories];
+    updated.splice(i, 1);
+    setCategories(updated);
+  };
 
   const handleSubmit = () => {
     if (!form.date || !form.vendor || !form.amount || !form.category) {
@@ -62,38 +79,56 @@ function ExpenseTracker() {
     setForm({ date: "", vendor: "", amount: "", category: "", type: "card" });
   };
 
-  const editExpense = (i) => {
-    setForm(expenses[i]);
-    setEditingIndex(i);
-  };
-
-  const deleteExpense = (i) => {
-    const updated = [...expenses];
-    updated.splice(i, 1);
-    setExpenses(updated);
-  };
-
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const cashTotal = expenses.filter(e => e.type === "cash").reduce((s, e) => s + e.amount, 0);
-  const cardTotal = expenses.filter(e => e.type === "card").reduce((s, e) => s + e.amount, 0);
 
   const categoryTotals = categories.map(cat => {
     const total = expenses.filter(e => e.category === cat.name).reduce((sum, e) => sum + e.amount, 0);
     return { ...cat, total };
   });
 
+  // 🧠 NAVIGATION
+  const nav = React.createElement("div", { className: "flex gap-3 mb-6" },
+    React.createElement("button", { onClick: () => setView("dashboard"), className: "bg-blue-500 text-white px-3 py-1 rounded" }, "Dashboard"),
+    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-3 py-1 rounded" }, "Setup")
+  );
+
+  // ⚙️ SETUP PAGE
+  if (view === "setup") {
+    return React.createElement("div", { className: "p-6" },
+      nav,
+      React.createElement("h2", { className: "text-2xl font-bold mb-4" }, "Setup Categories & Budgets"),
+
+      React.createElement("div", { className: "mb-4" },
+        React.createElement("input", {
+          placeholder: "Category Name",
+          value: newCategory.name,
+          onChange: e => setNewCategory({ ...newCategory, name: e.target.value })
+        }),
+        React.createElement("input", {
+          type: "number",
+          placeholder: "Budget",
+          value: newCategory.budget,
+          onChange: e => setNewCategory({ ...newCategory, budget: e.target.value })
+        }),
+        React.createElement("button", { onClick: addCategory, className: "ml-2 bg-green-500 text-white px-3 py-1" }, "Add")
+      ),
+
+      categories.map((c, i) =>
+        React.createElement("div", { key: i, className: "flex justify-between border-b py-2" },
+          React.createElement("span", null, `${c.name} - $${c.budget}`),
+          React.createElement("button", { onClick: () => deleteCategory(i), className: "text-red-500" }, "Delete")
+        )
+      )
+    );
+  }
+
+  // 📊 DASHBOARD
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+
+    nav,
 
     React.createElement("h1", { className: "text-3xl font-bold mb-6" }, "💰 Expense Tracker"),
 
-    // Summary cards
-    React.createElement("div", { className: "grid grid-cols-3 gap-4 mb-6" },
-      React.createElement("div", { className: "bg-white p-4 rounded shadow" }, "Total: $" + total),
-      React.createElement("div", { className: "bg-white p-4 rounded shadow" }, "Card: $" + cardTotal),
-      React.createElement("div", { className: "bg-white p-4 rounded shadow" }, "Cash: $" + cashTotal)
-    ),
-
-    // Budget section
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-6" },
       React.createElement("h2", { className: "mb-3 font-semibold" }, "Category Budgets"),
       categoryTotals.map(c => {
@@ -105,7 +140,7 @@ function ExpenseTracker() {
           ),
           React.createElement("div", { className: "w-full bg-gray-200 h-2 rounded" },
             React.createElement("div", {
-              className: percent > 100 ? "bg-red-500 h-2 rounded" : percent > 80 ? "bg-yellow-400 h-2 rounded" : "bg-green-500 h-2 rounded",
+              className: percent > 100 ? "bg-red-500 h-2" : percent > 80 ? "bg-yellow-400 h-2" : "bg-green-500 h-2",
               style: { width: Math.min(percent, 100) + "%" }
             })
           )
@@ -113,60 +148,22 @@ function ExpenseTracker() {
       })
     ),
 
-    // Form
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-6" },
-      React.createElement("h2", { className: "mb-3 font-semibold" }, editingIndex !== null ? "Edit Expense" : "Add Expense"),
-
-      React.createElement("div", { className: "grid grid-cols-2 gap-3" },
-        React.createElement("input", {
-          type: "date",
-          value: form.date,
-          onChange: e => setForm({ ...form, date: e.target.value })
-        }),
-        React.createElement("input", {
-          placeholder: "Vendor",
-          value: form.vendor,
-          onChange: e => setForm({ ...form, vendor: e.target.value })
-        }),
-        React.createElement("input", {
-          type: "number",
-          placeholder: "Amount",
-          value: form.amount,
-          onChange: e => setForm({ ...form, amount: e.target.value })
-        }),
-        React.createElement("select", {
-          value: form.category,
-          onChange: e => setForm({ ...form, category: e.target.value })
-        },
-          React.createElement("option", { value: "" }, "Category"),
-          categories.map(c => React.createElement("option", { key: c.name }, c.name))
-        ),
-        React.createElement("select", {
-          value: form.type,
-          onChange: e => setForm({ ...form, type: e.target.value })
-        },
-          React.createElement("option", { value: "card" }, "Card"),
-          React.createElement("option", { value: "cash" }, "Cash")
-        )
+      React.createElement("h2", null, "Add Expense"),
+      React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+      React.createElement("input", { placeholder: "Vendor", value: form.vendor, onChange: e => setForm({ ...form, vendor: e.target.value }) }),
+      React.createElement("input", { type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
+      React.createElement("select", { value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
+        React.createElement("option", { value: "" }, "Category"),
+        categories.map(c => React.createElement("option", { key: c.name }, c.name))
       ),
-
-      React.createElement("button", {
-        onClick: handleSubmit,
-        className: "mt-3 bg-blue-500 text-white px-4 py-2 rounded"
-      }, editingIndex !== null ? "Update" : "Add Expense")
+      React.createElement("button", { onClick: handleSubmit, className: "ml-2 bg-blue-500 text-white px-3 py-1" }, "Add")
     ),
 
-    // Transactions
     React.createElement("div", { className: "bg-white p-4 rounded shadow" },
-      React.createElement("h2", { className: "mb-3 font-semibold" }, "Transactions"),
+      React.createElement("h2", null, "Transactions"),
       expenses.map((e, i) =>
-        React.createElement("div", { key: i, className: "flex justify-between border-b py-2" },
-          React.createElement("span", null, `${e.date} | ${e.vendor} | $${e.amount} | ${e.category} | ${e.type}`),
-          React.createElement("div", null,
-            React.createElement("button", { onClick: () => editExpense(i), className: "text-blue-500 mr-2" }, "Edit"),
-            React.createElement("button", { onClick: () => deleteExpense(i), className: "text-red-500" }, "Delete")
-          )
-        )
+        React.createElement("div", { key: i }, `${e.date} | ${e.vendor} | $${e.amount}`)
       )
     )
   );

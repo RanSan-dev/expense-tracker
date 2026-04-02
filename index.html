@@ -20,6 +20,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -109,11 +111,106 @@ function ExpenseTracker() {
     React.createElement("button", { type: "button", onClick: () => setView("yearSummary"), className: "bg-orange-600 text-white px-4 py-2 rounded shadow" }, "Year Summary")
   );
 
-  // SETUP (simple restore)
+  // ===== SETUP (FULL RESTORE) =====
+  const [newCategory, setNewCategory] = useState({ name: "", budget: "" });
+  const [newCard, setNewCard] = useState("");
+
+  const [editCatIndex, setEditCatIndex] = useState(null);
+  const [editCardIndex, setEditCardIndex] = useState(null);
+
+  useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
+  useEffect(() => localStorage.setItem("expenseCards", JSON.stringify(cards)), [cards]);
+
+  const addCategory = () => {
+    if (!newCategory.name || !newCategory.budget) return alert("Enter category + budget");
+
+    if (editCatIndex !== null) {
+      const updated = [...categories];
+      updated[editCatIndex] = { name: newCategory.name, budget: parseFloat(newCategory.budget) };
+      setCategories(updated);
+      setEditCatIndex(null);
+    } else {
+      setCategories([...categories, { name: newCategory.name, budget: parseFloat(newCategory.budget) }]);
+    }
+
+    setNewCategory({ name: "", budget: "" });
+  };
+
+  const addCard = () => {
+    if (!newCard) return alert("Enter card name");
+
+    if (editCardIndex !== null) {
+      const updated = [...cards];
+      updated[editCardIndex] = newCard;
+      setCards(updated);
+      setEditCardIndex(null);
+    } else {
+      setCards([...cards, newCard]);
+    }
+
+    setNewCard("");
+  };
+
   if (view === "setup") {
-    return React.createElement("div", { className: "p-6" },
+    return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
-      React.createElement("h2", null, "Setup (basic restored)")
+
+      // CATEGORIES
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("h2", { className: "font-bold mb-2" }, "Categories"),
+
+        React.createElement("input", { className: "border p-2 mr-2", placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
+        React.createElement("input", { className: "border p-2 mr-2", type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
+
+        React.createElement("button", { onClick: addCategory, className: "bg-blue-600 text-white px-3 py-1 rounded" }, editCatIndex !== null ? "Update" : "Add"),
+
+        categories.map((c, i) =>
+          React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+            React.createElement("span", null, `${c.name} - $${c.budget}`),
+            React.createElement("div", null,
+              React.createElement("button", {
+                onClick: () => {
+                  setNewCategory({ name: c.name, budget: c.budget });
+                  setEditCatIndex(i);
+                },
+                className: "text-blue-600 mr-2"
+              }, "Edit"),
+              React.createElement("button", {
+                onClick: () => setCategories(categories.filter((_, idx) => idx !== i)),
+                className: "text-red-600"
+              }, "Delete")
+            )
+          )
+        )
+      ),
+
+      // CARDS
+      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+        React.createElement("h2", { className: "font-bold mb-2" }, "Cards"),
+
+        React.createElement("input", { className: "border p-2 mr-2", placeholder: "Card Name", value: newCard, onChange: e => setNewCard(e.target.value) }),
+
+        React.createElement("button", { onClick: addCard, className: "bg-blue-600 text-white px-3 py-1 rounded" }, editCardIndex !== null ? "Update" : "Add"),
+
+        cards.map((c, i) =>
+          React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+            React.createElement("span", null, c),
+            React.createElement("div", null,
+              React.createElement("button", {
+                onClick: () => {
+                  setNewCard(c);
+                  setEditCardIndex(i);
+                },
+                className: "text-blue-600 mr-2"
+              }, "Edit"),
+              React.createElement("button", {
+                onClick: () => setCards(cards.filter((_, idx) => idx !== i)),
+                className: "text-red-600"
+              }, "Delete")
+            )
+          )
+        )
+      )
     );
   }
 
@@ -186,6 +283,27 @@ function ExpenseTracker() {
 
     React.createElement("div", { className: "mb-4 font-semibold" }, `Total: $${total}`),
 
+    // CATEGORY BARS (restored)
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      categories.map(cat => {
+        const spent = expensesForMonth.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
+        const percent = cat.budget ? (spent / cat.budget) * 100 : 0;
+
+        return React.createElement("div", { key: cat.name, className: "mb-3" },
+          React.createElement("div", { className: "flex justify-between text-sm" },
+            React.createElement("span", null, cat.name),
+            React.createElement("span", null, `$${spent} / $${cat.budget}`)
+          ),
+          React.createElement("div", { className: "w-full bg-gray-200 h-2 rounded" },
+            React.createElement("div", {
+              className: percent > 100 ? "bg-red-500 h-2 rounded" : percent > 80 ? "bg-yellow-400 h-2 rounded" : "bg-green-500 h-2 rounded",
+              style: { width: Math.min(percent, 100) + "%" }
+            })
+          )
+        );
+      })
+    ),
+
     // FORM
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4 space-x-2" },
       React.createElement("input", { className: "border p-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
@@ -241,8 +359,6 @@ window.onload = () => {
     );
   }
 };
-
-
 
     </script>
   </body>

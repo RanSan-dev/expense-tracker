@@ -28,6 +28,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -39,6 +41,7 @@ function ExpenseTracker() {
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cards, setCards] = useState([]);
+  const [atmBudget, setAtmBudget] = useState(parseFloat(localStorage.getItem("atmBudget") || "0"));
   const [view, setView] = useState("dashboard");
 
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "", card: "" });
@@ -118,8 +121,28 @@ function ExpenseTracker() {
   const expectedSpendToDate = dailyBudget * currentDay;
   const difference = total - expectedSpendToDate;
 
+  // ===== ADVANCED DAILY BURN (YOUR SHEET LOGIC) =====
+  const cumulativeSpend = expensesForMonth
+    .sort((a,b)=> new Date(a.date) - new Date(b.date))
+    .reduce((arr, e) => {
+      const last = arr.length ? arr[arr.length-1].total : 0;
+      arr.push({
+        date: e.date,
+        total: last + e.amount
+      });
+      return arr;
+    }, []);
+
+  const burnToday = cumulativeSpend.length ? cumulativeSpend[cumulativeSpend.length-1].total : 0;
+  const expectedToday = dailyBudget * currentDay;
+  const burnDiff = burnToday - expectedToday;
+
   // PROJECTED END OF MONTH
   const projectedTotal = currentDay > 0 ? (total / currentDay) * daysInMonth : 0;
+
+  // ATM TRACKING
+  const atmSpent = expensesForMonth.filter(e => e.category === "ATM").reduce((s,e)=>s+e.amount,0);
+  const atmRemaining = atmBudget - atmSpent;
 
   const yearTotals = {};
   expenses.forEach(e => {
@@ -144,6 +167,7 @@ function ExpenseTracker() {
 
   useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
   useEffect(() => localStorage.setItem("expenseCards", JSON.stringify(cards)), [cards]);
+  useEffect(() => localStorage.setItem("atmBudget", atmBudget), [atmBudget]);
 
   const addCategory = () => {
     if (!newCategory.name || !newCategory.budget) return alert("Enter category + budget");
@@ -178,6 +202,18 @@ function ExpenseTracker() {
   if (view === "setup") {
     return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
+
+      // ATM SETUP (NEW)
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("h2", { className: "font-bold mb-2" }, "ATM / Cash Pool"),
+        React.createElement("input", {
+          className: "border p-2 mr-2",
+          type: "number",
+          placeholder: "Monthly ATM Budget",
+          value: atmBudget,
+          onChange: e => setAtmBudget(parseFloat(e.target.value) || 0)
+        })
+      ),
 
       // CATEGORIES
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
@@ -324,6 +360,19 @@ function ExpenseTracker() {
       `Projected End-of-Month: $${projectedTotal.toFixed(2)}`
     ),
 
+    // DAILY BURN DISPLAY (NEW)
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold mb-1" }, "Daily Burn Tracking"),
+      React.createElement("div", null, `Day: ${currentDay} / ${daysInMonth}`),
+      React.createElement("div", null, `Expected Spend: $${expectedToday.toFixed(2)}`),
+      React.createElement("div", null, `Actual Spend: $${burnToday.toFixed(2)}`),
+      React.createElement("div", {
+        className: burnDiff > 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"
+      }, burnDiff > 0
+        ? `Over pace by $${burnDiff.toFixed(2)}`
+        : `Under pace by $${Math.abs(burnDiff).toFixed(2)}`)
+    ),
+
     // EMAIL BUTTON (Gmail compose)
     React.createElement("button", {
       onClick: () => {
@@ -343,6 +392,18 @@ Projected: $${projectedTotal.toFixed(2)}`
       },
       className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
     }, "Email Report"),
+
+    // ATM DISPLAY (NEW)
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold" }, "ATM / Cash"),
+      React.createElement("div", null, `Budget: $${atmBudget.toFixed(2)}`),
+      React.createElement("div", null, `Spent: $${atmSpent.toFixed(2)}`),
+      React.createElement("div", {
+        className: atmRemaining < 0 ? "text-red-600" : "text-green-600"
+      }, atmRemaining < 0
+        ? `Over by $${Math.abs(atmRemaining).toFixed(2)}`
+        : `Remaining: $${atmRemaining.toFixed(2)}`)
+    ),
 
     // CATEGORY BARS (buckets + percent)
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
@@ -432,9 +493,6 @@ window.onload = () => {
     );
   }
 };
-
-
-
 
     </script>
   </body>

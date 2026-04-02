@@ -38,6 +38,8 @@
 
 // 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
 
+// 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -49,6 +51,8 @@ function ExpenseTracker() {
 
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "", card: "" });
   const [storeSuggestions, setStoreSuggestions] = useState([]);
+  const normalizeStore = (s) => (s || "").trim();
+  const keyStore = (s) => normalizeStore(s).toLowerCase();
   const [editExpenseIndex, setEditExpenseIndex] = useState(null);
 
   useEffect(() => {
@@ -65,16 +69,24 @@ function ExpenseTracker() {
   useEffect(() => {
     localStorage.setItem("expenseAppData", JSON.stringify(expenses));
 
-    // update store suggestions automatically
-    const uniqueStores = [...new Set(expenses.map(e => e.store).filter(Boolean))];
-    setStoreSuggestions(uniqueStores);
+    // update store suggestions automatically (dedupe case-insensitive)
+    const map = {};
+    expenses.forEach(e => {
+      const name = normalizeStore(e.store);
+      if (!name) return;
+      const k = keyStore(name);
+      if (!map[k]) map[k] = name; // keep first seen casing
+    });
+    setStoreSuggestions(Object.values(map));
   }, [expenses]);
 
   // ===== EXPENSE =====
   const handleSubmit = () => {
     if (!form.date || !form.store || !form.amount || !form.category) return alert("Fill all fields");
 
-    const newItem = { ...form, amount: parseFloat(form.amount) };
+    const cleanedStore = normalizeStore(form.store);
+
+    const newItem = { ...form, store: cleanedStore, amount: parseFloat(form.amount) };
 
     if (editExpenseIndex !== null) {
       const updated = [...expenses];
@@ -199,7 +211,18 @@ function ExpenseTracker() {
           onChange: e => setForm({ ...form, store: e.target.value })
         }),
         React.createElement("datalist", { id: "store-list" },
-          storeSuggestions.map((s, i) => React.createElement("option", { key: i, value: s }))
+          // filter + rank suggestions (startsWith first, case-insensitive)
+          storeSuggestions
+            .filter(s => keyStore(s).includes(keyStore(form.store)))
+            .sort((a, b) => {
+              const ka = keyStore(a), kb = keyStore(b), q = keyStore(form.store);
+              const aStarts = ka.startsWith(q) ? 0 : 1;
+              const bStarts = kb.startsWith(q) ? 0 : 1;
+              if (aStarts !== bStarts) return aStarts - bStarts;
+              return ka.localeCompare(kb);
+            })
+            .slice(0, 8)
+            .map((s, i) => React.createElement("option", { key: i, value: s }))
         )
       ),
       React.createElement("input", { className: "border p-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
@@ -240,6 +263,7 @@ window.onload = () => {
     );
   }
 };
+
 
 
     </script>

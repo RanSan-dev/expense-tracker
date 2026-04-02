@@ -18,6 +18,8 @@
 
 // 🌐 PHASE 3: CARDS + INCOME + WARNINGS ADDED
 
+// 🌐 FIXED PHASE 3 (buttons + setup working + better UI)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -32,142 +34,107 @@ function ExpenseTracker() {
 
   const [view, setView] = useState("dashboard");
 
-  const [form, setForm] = useState({ date: "", vendor: "", amount: "", category: "", card: "", type: "card" });
+  const [form, setForm] = useState({ date: "", vendor: "", amount: "", category: "", card: "" });
 
   useEffect(() => {
-    const saved = localStorage.getItem("expenseAppData");
-    if (saved) setExpenses(JSON.parse(saved));
-
-    const savedCats = localStorage.getItem("expenseCategories");
-    if (savedCats) setCategories(JSON.parse(savedCats));
-
-    const savedCards = localStorage.getItem("expenseCards");
-    if (savedCards) setCards(JSON.parse(savedCards));
-
-    const savedIncome = localStorage.getItem("expenseIncome");
-    if (savedIncome) setIncome(JSON.parse(savedIncome));
+    setExpenses(JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
+    setCategories(JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
+    setCards(JSON.parse(localStorage.getItem("expenseCards") || "[]"));
+    setIncome(JSON.parse(localStorage.getItem("expenseIncome") || "[]"));
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("expenseAppData", JSON.stringify(expenses));
-  }, [expenses]);
+  useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
+  useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
+  useEffect(() => localStorage.setItem("expenseCards", JSON.stringify(cards)), [cards]);
+  useEffect(() => localStorage.setItem("expenseIncome", JSON.stringify(income)), [income]);
 
-  useEffect(() => {
-    localStorage.setItem("expenseCategories", JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem("expenseCards", JSON.stringify(cards));
-  }, [cards]);
-
-  useEffect(() => {
-    localStorage.setItem("expenseIncome", JSON.stringify(income));
-  }, [income]);
-
-  // ADDERS
   const addCategory = () => {
-    if (!newCategory.name || !newCategory.budget) return;
+    if (!newCategory.name || !newCategory.budget) return alert("Enter category + budget");
     if (categories.length >= 10) return alert("Max 10 categories");
     setCategories([...categories, { name: newCategory.name, budget: parseFloat(newCategory.budget) }]);
     setNewCategory({ name: "", budget: "" });
   };
 
   const addCard = () => {
-    if (!newCard) return;
+    if (!newCard) return alert("Enter card name");
     setCards([...cards, newCard]);
     setNewCard("");
   };
 
   const addIncome = () => {
-    if (!newIncome.name || !newIncome.amount) return;
+    if (!newIncome.name || !newIncome.amount) return alert("Enter income");
     setIncome([...income, { ...newIncome, amount: parseFloat(newIncome.amount) }]);
     setNewIncome({ name: "", amount: "" });
   };
 
   const handleSubmit = () => {
     if (!form.date || !form.vendor || !form.amount || !form.category) {
-      alert("Fill all fields");
-      return;
+      return alert("Fill all fields");
     }
 
     const newItem = { ...form, amount: parseFloat(form.amount) };
     setExpenses([...expenses, newItem]);
 
-    // ⚠️ WARNING
     const cat = categories.find(c => c.name === form.category);
     if (cat) {
       const total = expenses.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0) + newItem.amount;
-      if (total > cat.budget) alert(`⚠️ ${cat.name} is OVER budget!`);
+      if (total > cat.budget) alert(`⚠️ ${cat.name} OVER budget`);
       else if (total > cat.budget * 0.8) alert(`⚠️ ${cat.name} nearing budget`);
     }
 
-    setForm({ date: "", vendor: "", amount: "", category: "", card: "", type: "card" });
+    setForm({ date: "", vendor: "", amount: "", category: "", card: "" });
   };
 
   const total = expenses.reduce((s, e) => s + e.amount, 0);
   const totalIncome = income.reduce((s, i) => s + i.amount, 0);
 
-  const categoryTotals = categories.map(cat => {
-    const total = expenses.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
-    return { ...cat, total };
-  });
-
-  const cardTotals = cards.map(card => {
-    const total = expenses.filter(e => e.card === card).reduce((s, e) => s + e.amount, 0);
-    return { name: card, total };
-  });
-
   const nav = React.createElement("div", { className: "flex gap-3 mb-6" },
-    React.createElement("button", { onClick: () => setView("dashboard"), className: "bg-blue-500 text-white px-3 py-1 rounded" }, "Dashboard"),
-    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-3 py-1 rounded" }, "Setup")
+    React.createElement("button", { onClick: () => setView("dashboard"), className: "bg-blue-500 text-white px-4 py-2 rounded" }, "Dashboard"),
+    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded" }, "Setup")
   );
 
-  // SETUP PAGE
   if (view === "setup") {
     return React.createElement("div", { className: "p-6" },
       nav,
-      React.createElement("h2", { className: "text-xl font-bold mb-3" }, "Categories"),
-      React.createElement("input", { placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
-      React.createElement("input", { type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
-      React.createElement("button", { onClick: addCategory }, "Add"),
+
+      React.createElement("h2", { className: "text-xl font-bold mb-2" }, "Categories"),
+      React.createElement("input", { className: "border p-1 mr-2", placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
+      React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
+      React.createElement("button", { type: "button", onClick: addCategory, className: "bg-green-500 text-white px-3 py-1" }, "Add"),
 
       React.createElement("h2", { className: "mt-6 font-bold" }, "Cards"),
-      React.createElement("input", { placeholder: "Card Name", value: newCard, onChange: e => setNewCard(e.target.value) }),
-      React.createElement("button", { onClick: addCard }, "Add"),
+      React.createElement("input", { className: "border p-1 mr-2", placeholder: "Card Name", value: newCard, onChange: e => setNewCard(e.target.value) }),
+      React.createElement("button", { type: "button", onClick: addCard, className: "bg-green-500 text-white px-3 py-1" }, "Add"),
 
       React.createElement("h2", { className: "mt-6 font-bold" }, "Income"),
-      React.createElement("input", { placeholder: "Source", value: newIncome.name, onChange: e => setNewIncome({ ...newIncome, name: e.target.value }) }),
-      React.createElement("input", { type: "number", placeholder: "Amount", value: newIncome.amount, onChange: e => setNewIncome({ ...newIncome, amount: e.target.value }) }),
-      React.createElement("button", { onClick: addIncome }, "Add")
+      React.createElement("input", { className: "border p-1 mr-2", placeholder: "Source", value: newIncome.name, onChange: e => setNewIncome({ ...newIncome, name: e.target.value }) }),
+      React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Amount", value: newIncome.amount, onChange: e => setNewIncome({ ...newIncome, amount: e.target.value }) }),
+      React.createElement("button", { type: "button", onClick: addIncome, className: "bg-green-500 text-white px-3 py-1" }, "Add")
     );
   }
 
-  // DASHBOARD
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
     nav,
     React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Dashboard"),
 
     React.createElement("div", { className: "mb-4" }, `Income: $${totalIncome} | Spent: $${total}`),
 
-    React.createElement("h3", null, "Cards"),
-    cardTotals.map(c => React.createElement("div", { key: c.name }, `${c.name}: $${c.total}`)),
-
-    React.createElement("h3", null, "Budgets"),
-    categoryTotals.map(c => React.createElement("div", { key: c.name }, `${c.name}: $${c.total}/${c.budget}`)),
-
     React.createElement("h3", null, "Add Expense"),
-    React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-    React.createElement("input", { placeholder: "Vendor", value: form.vendor, onChange: e => setForm({ ...form, vendor: e.target.value }) }),
-    React.createElement("input", { type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
-    React.createElement("select", { value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
+    React.createElement("input", { className: "border p-1 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+    React.createElement("input", { className: "border p-1 mr-2", placeholder: "Vendor", value: form.vendor, onChange: e => setForm({ ...form, vendor: e.target.value }) }),
+    React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
+
+    React.createElement("select", { className: "border p-1 mr-2", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
       React.createElement("option", { value: "" }, "Category"),
       categories.map(c => React.createElement("option", { key: c.name }, c.name))
     ),
-    React.createElement("select", { value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
+
+    React.createElement("select", { className: "border p-1 mr-2", value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
       React.createElement("option", { value: "" }, "Card"),
       cards.map(c => React.createElement("option", { key: c }, c))
     ),
-    React.createElement("button", { onClick: handleSubmit }, "Add")
+
+    React.createElement("button", { type: "button", onClick: handleSubmit, className: "bg-blue-500 text-white px-3 py-1" }, "Add Expense")
   );
 }
 
@@ -179,6 +146,7 @@ window.onload = () => {
     );
   }
 };
+
 
 
 

@@ -32,6 +32,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -378,22 +380,98 @@ function ExpenseTracker() {
         : `Under pace by $${Math.abs(burnDiff).toFixed(2)}`)
     ),
 
-    // EMAIL BUTTON (Gmail compose)
+    // EMAIL BUTTON (Styled Summary Report)
     React.createElement("button", {
       onClick: () => {
-        const subject = encodeURIComponent("Monthly Budget Status");
+        // Build category stats
+        const catStats = categories.map(cat => {
+          const spent = expensesForMonth.filter(e => e.category === cat.name).reduce((s,e)=>s+e.amount,0);
+          const allocated = parseFloat(cat.budget) || 0;
+          const remaining = allocated - spent;
+          const pct = allocated ? (spent/allocated) : 0;
+          return { name: cat.name, spent, allocated, remaining, pct };
+        });
+
+        // Top 3 problem categories
+        const top3 = [...catStats]
+          .sort((a,b) => (b.pct - a.pct) || (a.remaining - b.remaining))
+          .slice(0,3)
+          .map(c => `• ${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remaining).toFixed(2)}` : `$${c.remaining.toFixed(2)} left`}`)
+          .join("
+");
+
+        const statusEmoji = burnDiff > 0 ? "🔴" : burnDiff > -50 ? "🟡" : "🟢";
+
+        const subject = encodeURIComponent("Monthly Budget Snapshot");
         const body = encodeURIComponent(
-          `Month: ${currentMonth}
-Total Spent: $${total}
-Budget: $${totalBudget}
-Daily Budget: $${dailyBudget.toFixed(2)}
-Expected: $${expectedSpendToDate.toFixed(2)}
-Difference: $${difference.toFixed(2)}
-Projected: $${projectedTotal.toFixed(2)}`
+`📊 MONTHLY SNAPSHOT
+
+Month: ${currentMonth}
+
+${statusEmoji} OVERALL STATUS
+Total Spent: $${total.toFixed(2)}
+Budget: $${totalBudget.toFixed(2)}
+Projected: $${projectedTotal.toFixed(2)}
+
+📅 DAILY PACE
+Expected: $${expectedToday.toFixed(2)}
+Actual: $${burnToday.toFixed(2)}
+${burnDiff > 0 ? `Over pace by $${burnDiff.toFixed(2)}` : `Under pace by $${Math.abs(burnDiff).toFixed(2)}`}
+
+💵 CASH
+Remaining: $${atmRemaining.toFixed(2)}
+
+⚠️ TOP 3 AREAS
+${top3}
+
+📂 CATEGORIES
+${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remaining).toFixed(2)}` : `$${c.remaining.toFixed(2)} left`}`).join("
+")}
+
+— Sent from Budget App`
         );
-        // Opens Gmail compose directly
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+
+        // HTML STYLE EMAIL (dashboard look)
+        const htmlBody = `
+        <div style="font-family:Arial;padding:10px;">
+          <h2>📊 Monthly Snapshot (${currentMonth})</h2>
+          <div style="padding:10px;border-radius:8px;background:${burnDiff>0?'#ffe5e5':'#e6ffed'};">
+            <strong>${statusEmoji} Status:</strong><br/>
+            Spent: $${total.toFixed(2)}<br/>
+            Budget: $${totalBudget.toFixed(2)}<br/>
+            Projected: $${projectedTotal.toFixed(2)}
+          </div>
+          <br/>
+          <div>
+            <strong>📅 Daily Pace</strong><br/>
+            Expected: $${expectedToday.toFixed(2)}<br/>
+            Actual: $${burnToday.toFixed(2)}<br/>
+            <span style="color:${burnDiff>0?'red':'green'};">
+              ${burnDiff>0?`Over $${burnDiff.toFixed(2)}`:`Under $${Math.abs(burnDiff).toFixed(2)}`}
+            </span>
+          </div>
+          <br/>
+          <div>
+            <strong>💵 Cash Remaining:</strong> $${atmRemaining.toFixed(2)}
+          </div>
+          <br/>
+          <div>
+            <strong>⚠️ Top 3</strong><br/>
+            ${top3.replace(/
+/g,'<br/>')}
+          </div>
+          <br/>
+          <div>
+            <strong>📂 Categories</strong><br/>
+            ${catStats.map(c=>`<div>${c.name}: <span style="color:${c.remaining<0?'red':'green'}">${c.remaining<0?`Over $${Math.abs(c.remaining).toFixed(2)}`:`$${c.remaining.toFixed(2)} left`}</span></div>`).join('')}
+          </div>
+        </div>`;
+
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodeURIComponent(htmlBody)}`;
         window.open(gmailUrl, '_blank');
+      },
+      className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
+    }, "Email Report"),
       },
       className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
     }, "Email Report"),
@@ -498,6 +576,7 @@ window.onload = () => {
     );
   }
 };
+
 
 
     </script>

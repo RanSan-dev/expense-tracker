@@ -18,17 +18,29 @@
 
 function ExpenseTracker() {
   const [expenses, setExpenses] = useState([]);
+  const [categories, setCategories] = useState([
+    { name: "Food", budget: 500 },
+    { name: "Gas", budget: 300 }
+  ]);
+
   const [form, setForm] = useState({ date: "", vendor: "", amount: "", category: "", type: "card" });
   const [editingIndex, setEditingIndex] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("expenseAppData");
     if (saved) setExpenses(JSON.parse(saved));
+
+    const savedCats = localStorage.getItem("expenseCategories");
+    if (savedCats) setCategories(JSON.parse(savedCats));
   }, []);
 
   useEffect(() => {
     localStorage.setItem("expenseAppData", JSON.stringify(expenses));
   }, [expenses]);
+
+  useEffect(() => {
+    localStorage.setItem("expenseCategories", JSON.stringify(categories));
+  }, [categories]);
 
   const handleSubmit = () => {
     if (!form.date || !form.vendor || !form.amount || !form.category) {
@@ -62,9 +74,13 @@ function ExpenseTracker() {
   };
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-
   const cashTotal = expenses.filter(e => e.type === "cash").reduce((s, e) => s + e.amount, 0);
   const cardTotal = expenses.filter(e => e.type === "card").reduce((s, e) => s + e.amount, 0);
+
+  const categoryTotals = categories.map(cat => {
+    const total = expenses.filter(e => e.category === cat.name).reduce((sum, e) => sum + e.amount, 0);
+    return { ...cat, total };
+  });
 
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
 
@@ -75,6 +91,26 @@ function ExpenseTracker() {
       React.createElement("div", { className: "bg-white p-4 rounded shadow" }, "Total: $" + total),
       React.createElement("div", { className: "bg-white p-4 rounded shadow" }, "Card: $" + cardTotal),
       React.createElement("div", { className: "bg-white p-4 rounded shadow" }, "Cash: $" + cashTotal)
+    ),
+
+    // Budget section
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-6" },
+      React.createElement("h2", { className: "mb-3 font-semibold" }, "Category Budgets"),
+      categoryTotals.map(c => {
+        const percent = c.budget ? (c.total / c.budget) * 100 : 0;
+        return React.createElement("div", { key: c.name, className: "mb-2" },
+          React.createElement("div", { className: "flex justify-between text-sm" },
+            React.createElement("span", null, c.name),
+            React.createElement("span", null, `$${c.total} / $${c.budget}`)
+          ),
+          React.createElement("div", { className: "w-full bg-gray-200 h-2 rounded" },
+            React.createElement("div", {
+              className: percent > 100 ? "bg-red-500 h-2 rounded" : percent > 80 ? "bg-yellow-400 h-2 rounded" : "bg-green-500 h-2 rounded",
+              style: { width: Math.min(percent, 100) + "%" }
+            })
+          )
+        );
+      })
     ),
 
     // Form
@@ -98,11 +134,13 @@ function ExpenseTracker() {
           value: form.amount,
           onChange: e => setForm({ ...form, amount: e.target.value })
         }),
-        React.createElement("input", {
-          placeholder: "Category",
+        React.createElement("select", {
           value: form.category,
           onChange: e => setForm({ ...form, category: e.target.value })
-        }),
+        },
+          React.createElement("option", { value: "" }, "Category"),
+          categories.map(c => React.createElement("option", { key: c.name }, c.name))
+        ),
         React.createElement("select", {
           value: form.type,
           onChange: e => setForm({ ...form, type: e.target.value })
@@ -142,6 +180,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

@@ -24,6 +24,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -320,7 +322,7 @@ function ExpenseTracker() {
       `Projected End-of-Month: $${projectedTotal.toFixed(2)}`
     ),
 
-    // EMAIL BUTTON
+    // EMAIL BUTTON (Gmail compose)
     React.createElement("button", {
       onClick: () => {
         const subject = encodeURIComponent("Monthly Budget Status");
@@ -330,9 +332,12 @@ Total Spent: $${total}
 Budget: $${totalBudget}
 Daily Budget: $${dailyBudget.toFixed(2)}
 Expected: $${expectedSpendToDate.toFixed(2)}
-Difference: $${difference.toFixed(2)}`
+Difference: $${difference.toFixed(2)}
+Projected: $${projectedTotal.toFixed(2)}`
         );
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        // Opens Gmail compose directly
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+        window.open(gmailUrl, '_blank');
       },
       className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
     }, "Email Report"),
@@ -413,6 +418,7 @@ window.onload = () => {
     );
   }
 };
+
 
 
     </script>

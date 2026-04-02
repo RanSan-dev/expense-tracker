@@ -30,6 +30,8 @@
 
 // 🌐 PHASE 3.1: SETUP LISTING + EDIT/DELETE
 
+// 🌐 PHASE 4: EDIT EXPENSE + UI POLISH + STORE LABEL + CATEGORY REPORT
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -45,10 +47,11 @@ function ExpenseTracker() {
   const [editCatIndex, setEditCatIndex] = useState(null);
   const [editCardIndex, setEditCardIndex] = useState(null);
   const [editIncomeIndex, setEditIncomeIndex] = useState(null);
+  const [editExpenseIndex, setEditExpenseIndex] = useState(null);
 
   const [view, setView] = useState("dashboard");
 
-  const [form, setForm] = useState({ date: "", vendor: "", amount: "", category: "", card: "" });
+  const [form, setForm] = useState({ date: "", store: "", amount: "", category: "", card: "" });
 
   useEffect(() => {
     setExpenses(JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
@@ -62,261 +65,45 @@ function ExpenseTracker() {
   useEffect(() => localStorage.setItem("expenseCards", JSON.stringify(cards)), [cards]);
   useEffect(() => localStorage.setItem("expenseIncome", JSON.stringify(income)), [income]);
 
-  // ===== CRUD HELPERS =====
-  const addCategory = () => {
-    if (!newCategory.name || !newCategory.budget) return alert("Enter category + budget");
-    if (categories.length >= 10 && editCatIndex === null) return alert("Max 10 categories");
-
-    if (editCatIndex !== null) {
-      const updated = [...categories];
-      updated[editCatIndex] = { name: newCategory.name, budget: parseFloat(newCategory.budget) };
-      setCategories(updated);
-      setEditCatIndex(null);
-    } else {
-      setCategories([...categories, { name: newCategory.name, budget: parseFloat(newCategory.budget) }]);
-    }
-    setNewCategory({ name: "", budget: "" });
-  };
-
-  const editCategory = (i) => {
-    setNewCategory(categories[i]);
-    setEditCatIndex(i);
-  };
-
-  const deleteCategory = (i) => {
-    const updated = [...categories];
-    updated.splice(i, 1);
-    setCategories(updated);
-  };
-
-  const addCard = () => {
-    if (!newCard) return alert("Enter card name");
-    if (editCardIndex !== null) {
-      const updated = [...cards];
-      updated[editCardIndex] = newCard;
-      setCards(updated);
-      setEditCardIndex(null);
-    } else {
-      setCards([...cards, newCard]);
-    }
-    setNewCard("");
-  };
-
-  const editCard = (i) => {
-    setNewCard(cards[i]);
-    setEditCardIndex(i);
-  };
-
-  const deleteCard = (i) => {
-    const updated = [...cards];
-    updated.splice(i, 1);
-    setCards(updated);
-  };
-
-  const addIncome = () => {
-    if (!newIncome.name || !newIncome.amount) return alert("Enter income");
-    if (editIncomeIndex !== null) {
-      const updated = [...income];
-      updated[editIncomeIndex] = { ...newIncome, amount: parseFloat(newIncome.amount) };
-      setIncome(updated);
-      setEditIncomeIndex(null);
-    } else {
-      setIncome([...income, { ...newIncome, amount: parseFloat(newIncome.amount) }]);
-    }
-    setNewIncome({ name: "", amount: "" });
-  };
-
-  const editIncome = (i) => {
-    setNewIncome(income[i]);
-    setEditIncomeIndex(i);
-  };
-
-  const deleteIncome = (i) => {
-    const updated = [...income];
-    updated.splice(i, 1);
-    setIncome(updated);
-  };
-
-  // ===== EXPENSES =====
+  // ===== EXPENSE HANDLING =====
   const handleSubmit = () => {
-    if (!form.date || !form.vendor || !form.amount || !form.category) {
+    if (!form.date || !form.store || !form.amount || !form.category) {
       return alert("Fill all fields");
     }
 
     const newItem = { ...form, amount: parseFloat(form.amount) };
-    setExpenses([...expenses, newItem]);
 
-    const cat = categories.find(c => c.name === form.category);
-    if (cat) {
-      const total = expenses.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0) + newItem.amount;
-      if (total > cat.budget) alert(`⚠️ ${cat.name} OVER budget`);
-      else if (total > cat.budget * 0.8) alert(`⚠️ ${cat.name} nearing budget`);
+    if (editExpenseIndex !== null) {
+      const updated = [...expenses];
+      updated[editExpenseIndex] = newItem;
+      setExpenses(updated);
+      setEditExpenseIndex(null);
+    } else {
+      setExpenses([...expenses, newItem]);
     }
 
-    setForm({ date: "", vendor: "", amount: "", category: "", card: "" });
+    setForm({ date: "", store: "", amount: "", category: "", card: "" });
+  };
+
+  const editExpense = (i) => {
+    setForm(expenses[i]);
+    setEditExpenseIndex(i);
+  };
+
+  const deleteExpense = (i) => {
+    const updated = [...expenses];
+    updated.splice(i, 1);
+    setExpenses(updated);
   };
 
   const total = expenses.reduce((s, e) => s + e.amount, 0);
-  const totalIncome = income.reduce((s, i) => s + i.amount, 0);
 
+  // ===== NAV =====
   const nav = React.createElement("div", { className: "flex gap-3 mb-6" },
-    React.createElement("button", { onClick: () => setView("dashboard"), className: "bg-blue-500 text-white px-4 py-2 rounded" }, "Dashboard"),
-    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded" }, "Setup"),
-    React.createElement("button", { onClick: () => setView("report"), className: "bg-green-600 text-white px-4 py-2 rounded" }, "Report")
-  );
-
-  // ===== SETUP PAGE =====
-  if (view === "setup") {
-    return React.createElement("div", { className: "p-6" },
-      nav,
-
-      // Categories
-      React.createElement("h2", { className: "text-xl font-bold mb-2" }, "Categories"),
-      React.createElement("input", { className: "border p-1 mr-2", placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
-      React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
-      React.createElement("button", { type: "button", onClick: addCategory, className: "bg-green-500 text-white px-3 py-1" }, editCatIndex !== null ? "Update" : "Add"),
-
-      categories.map((c, i) => React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
-        React.createElement("span", null, `${c.name} - $${c.budget}`),
-        React.createElement("div", null,
-          React.createElement("button", { onClick: () => editCategory(i), className: "text-blue-500 mr-2" }, "Edit"),
-          React.createElement("button", { onClick: () => deleteCategory(i), className: "text-red-500" }, "Delete")
-        )
-      )),
-
-      // Cards
-      React.createElement("h2", { className: "mt-6 font-bold" }, "Cards"),
-      React.createElement("input", { className: "border p-1 mr-2", placeholder: "Card Name", value: newCard, onChange: e => setNewCard(e.target.value) }),
-      React.createElement("button", { type: "button", onClick: addCard, className: "bg-green-500 text-white px-3 py-1" }, editCardIndex !== null ? "Update" : "Add"),
-
-      cards.map((c, i) => React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
-        React.createElement("span", null, c),
-        React.createElement("div", null,
-          React.createElement("button", { onClick: () => editCard(i), className: "text-blue-500 mr-2" }, "Edit"),
-          React.createElement("button", { onClick: () => deleteCard(i), className: "text-red-500" }, "Delete")
-        )
-      )),
-
-      // Income
-      React.createElement("h2", { className: "mt-6 font-bold" }, "Income"),
-      React.createElement("input", { className: "border p-1 mr-2", placeholder: "Source", value: newIncome.name, onChange: e => setNewIncome({ ...newIncome, name: e.target.value }) }),
-      React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Amount", value: newIncome.amount, onChange: e => setNewIncome({ ...newIncome, amount: e.target.value }) }),
-      React.createElement("button", { type: "button", onClick: addIncome, className: "bg-green-500 text-white px-3 py-1" }, editIncomeIndex !== null ? "Update" : "Add"),
-
-      income.map((inc, i) => React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
-        React.createElement("span", null, `${inc.name} - $${inc.amount}`),
-        React.createElement("div", null,
-          React.createElement("button", { onClick: () => editIncome(i), className: "text-blue-500 mr-2" }, "Edit"),
-          React.createElement("button", { onClick: () => deleteIncome(i), className: "text-red-500" }, "Delete")
-        )
-      ))
-    );
-  }
-
-  // ===== REPORT PAGE =====
-  if (view === "report") {
-    // group by vendor
-    const vendorMap = {};
-    expenses.forEach(e => {
-      if (!vendorMap[e.vendor]) vendorMap[e.vendor] = [];
-      vendorMap[e.vendor].push(e);
-    });
-
-    return React.createElement("div", { className: "p-6 bg-white" },
-      nav,
-      React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Vendor Report"),
-
-      Object.keys(vendorMap).length === 0
-        ? React.createElement("div", null, "No data")
-        : Object.entries(vendorMap).map(([vendor, items]) => {
-            const subtotal = items.reduce((s, i) => s + i.amount, 0);
-
-            return React.createElement("div", { key: vendor, className: "mb-6" },
-              React.createElement("h2", { className: "font-bold" }, `${vendor} — $${subtotal.toFixed(2)}`),
-
-              items.map((i, idx) =>
-                React.createElement("div", { key: idx, className: "text-sm" },
-                  `${i.date} | $${i.amount} | ${i.category}`
-                )
-              )
-            );
-          }),
-
-      React.createElement("button", {
-        onClick: () => window.print(),
-        className: "mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-      }, "Print Report")
-    );
-  }
-
-  // ===== DASHBOARD =====
-  return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-    nav,
-    React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Dashboard"),
-
-    React.createElement("div", { className: "mb-4" }, `Income: $${totalIncome} | Spent: $${total}`),
-
-    // 🔥 RESTORED CATEGORY PROGRESS BARS
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-6" },
-      React.createElement("h3", { className: "font-bold mb-2" }, "Category Budgets"),
-      categories.map(cat => {
-        const spent = expenses.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
-        const percent = cat.budget ? (spent / cat.budget) * 100 : 0;
-
-        return React.createElement("div", { key: cat.name, className: "mb-3" },
-          React.createElement("div", { className: "flex justify-between text-sm" },
-            React.createElement("span", null, cat.name),
-            React.createElement("span", null, `$${spent} / $${cat.budget}`)
-          ),
-          React.createElement("div", { className: "w-full bg-gray-200 h-2 rounded" },
-            React.createElement("div", {
-              className: percent > 100 ? "bg-red-500 h-2 rounded" : percent > 80 ? "bg-yellow-400 h-2 rounded" : "bg-green-500 h-2 rounded",
-              style: { width: Math.min(percent, 100) + "%" }
-            })
-          )
-        );
-      })
-    ),
-
-    React.createElement("h3", null, "Add Expense"),
-    React.createElement("input", { className: "border p-1 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-    React.createElement("input", { className: "border p-1 mr-2", placeholder: "Vendor", value: form.vendor, onChange: e => setForm({ ...form, vendor: e.target.value }) }),
-    React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
-
-    React.createElement("select", { className: "border p-1 mr-2", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
-      React.createElement("option", { value: "" }, "Category"),
-      categories.map(c => React.createElement("option", { key: c.name }, c.name))
-    ),
-
-    React.createElement("select", { className: "border p-1 mr-2", value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
-      React.createElement("option", { value: "" }, "Card"),
-      cards.map(c => React.createElement("option", { key: c }, c))
-    ),
-
-    React.createElement("button", { type: "button", onClick: handleSubmit, className: "bg-blue-500 text-white px-3 py-1" }, "Add Expense"),
-
-    // 📄 EXPENSE LIST (RESTORED)
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mt-6" },
-      React.createElement("h3", { className: "font-bold mb-2" }, "Transactions"),
-      expenses.length === 0
-        ? React.createElement("div", null, "No expenses yet")
-        : expenses.map((e, i) =>
-            React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
-              React.createElement("span", null, `${e.date} | ${e.vendor} | $${e.amount} | ${e.category} | ${e.card || "-"}`)
-            )
-          )
-    )
-  );
-}
-
-window.onload = () => {
-  const root = document.getElementById("root");
-  if (root) {
-    ReactDOM.createRoot(root).render(
-      React.createElement(ExpenseTracker)
-    );
-  }
-};
+    React.createElement("button", { onClick: () => setView("dashboard"), className: "bg-blue-600 text-white px-4 py-2 rounded shadow" }, "Dashboard"),
+    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded shadow" }, "Setup"),
+    React.createElement("button", { onClick: () => setView("report"), className: "bg-green-600 text-white px-4 py-2 rounded shadow" }, "Vendor Report"),
+    React.createElement("button", { onClick: () => setView("categoryReport"), className: "bg-purple-600 text-white px-4 py-2 rounded shadow" }, "Category Report")
 
 
 

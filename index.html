@@ -18,6 +18,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -167,25 +169,65 @@ function ExpenseTracker() {
   }
 
   // DASHBOARD
-  return React.createElement("div", { className: "p-6" },
+  return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
     nav,
-    React.createElement("h1", null, "Dashboard"),
+    React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Dashboard"),
 
-    React.createElement("input", {
-      type: "month",
-      value: currentMonth,
-      onChange: e => setCurrentMonth(e.target.value)
-    }),
+    // Month selector
+    React.createElement("div", { className: "mb-4" },
+      React.createElement("label", { className: "mr-2" }, "Month:"),
+      React.createElement("input", {
+        type: "month",
+        value: currentMonth,
+        onChange: e => setCurrentMonth(e.target.value),
+        className: "border p-2"
+      })
+    ),
 
-    React.createElement("div", null, `Total: $${total}`),
+    React.createElement("div", { className: "mb-4 font-semibold" }, `Total: $${total}`),
 
-    React.createElement("button", { onClick: handleSubmit }, "Add Expense"),
+    // FORM
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4 space-x-2" },
+      React.createElement("input", { className: "border p-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+      React.createElement("input", {
+        className: "border p-2",
+        placeholder: "Store",
+        list: "store-list",
+        value: form.store,
+        onChange: e => {
+          const val = e.target.value;
+          const match = storeSuggestions.find(s => keyStore(s).startsWith(keyStore(val)));
+          setForm({ ...form, store: match || val });
+        }
+      }),
+      React.createElement("datalist", { id: "store-list" },
+        storeSuggestions.map((s, i) => React.createElement("option", { key: i, value: s }))
+      ),
+      React.createElement("input", { className: "border p-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
 
-    expensesForMonth.map((e, i) =>
-      React.createElement("div", { key: i },
-        `${e.date} ${e.store} $${e.amount}`,
-        React.createElement("button", { onClick: () => editExpense(i) }, "Edit"),
-        React.createElement("button", { onClick: () => deleteExpense(i) }, "Delete")
+      React.createElement("select", { className: "border p-2", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
+        React.createElement("option", { value: "" }, "Category"),
+        categories.map(c => React.createElement("option", { key: c.name }, c.name))
+      ),
+
+      React.createElement("select", { className: "border p-2", value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
+        React.createElement("option", { value: "" }, "Card"),
+        cards.map(c => React.createElement("option", { key: c }, c))
+      ),
+
+      React.createElement("button", { onClick: handleSubmit, className: "bg-blue-600 text-white px-4 py-2 rounded shadow" }, editExpenseIndex !== null ? "Update" : "Add")
+    ),
+
+    // LIST
+    React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+      expensesForMonth.map((e, i) =>
+        React.createElement("div", { key: i, className: "flex justify-between border-b py-2" },
+          React.createElement("span", null, `${e.date} | ${e.store} | $${e.amount}`),
+          React.createElement("div", null,
+            React.createElement("button", { onClick: () => editExpense(i), className: "text-blue-600 mr-2" }, "Edit"),
+            React.createElement("button", { onClick: () => deleteExpense(i), className: "text-red-600" }, "Delete")
+          )
+        )
       )
     )
   );
@@ -199,6 +241,7 @@ window.onload = () => {
     );
   }
 };
+
 
 
     </script>

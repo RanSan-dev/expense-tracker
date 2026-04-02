@@ -22,6 +22,8 @@
 
 // 🌐 FIXED PHASE 3 (buttons + setup working + better UI)
 
+// 🌐 PHASE 3.1: SETUP LISTING + EDIT/DELETE
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -33,6 +35,10 @@ function ExpenseTracker() {
   const [newCategory, setNewCategory] = useState({ name: "", budget: "" });
   const [newCard, setNewCard] = useState("");
   const [newIncome, setNewIncome] = useState({ name: "", amount: "" });
+
+  const [editCatIndex, setEditCatIndex] = useState(null);
+  const [editCardIndex, setEditCardIndex] = useState(null);
+  const [editIncomeIndex, setEditIncomeIndex] = useState(null);
 
   const [view, setView] = useState("dashboard");
 
@@ -50,25 +56,82 @@ function ExpenseTracker() {
   useEffect(() => localStorage.setItem("expenseCards", JSON.stringify(cards)), [cards]);
   useEffect(() => localStorage.setItem("expenseIncome", JSON.stringify(income)), [income]);
 
+  // ===== CRUD HELPERS =====
   const addCategory = () => {
     if (!newCategory.name || !newCategory.budget) return alert("Enter category + budget");
-    if (categories.length >= 10) return alert("Max 10 categories");
-    setCategories([...categories, { name: newCategory.name, budget: parseFloat(newCategory.budget) }]);
+    if (categories.length >= 10 && editCatIndex === null) return alert("Max 10 categories");
+
+    if (editCatIndex !== null) {
+      const updated = [...categories];
+      updated[editCatIndex] = { name: newCategory.name, budget: parseFloat(newCategory.budget) };
+      setCategories(updated);
+      setEditCatIndex(null);
+    } else {
+      setCategories([...categories, { name: newCategory.name, budget: parseFloat(newCategory.budget) }]);
+    }
     setNewCategory({ name: "", budget: "" });
+  };
+
+  const editCategory = (i) => {
+    setNewCategory(categories[i]);
+    setEditCatIndex(i);
+  };
+
+  const deleteCategory = (i) => {
+    const updated = [...categories];
+    updated.splice(i, 1);
+    setCategories(updated);
   };
 
   const addCard = () => {
     if (!newCard) return alert("Enter card name");
-    setCards([...cards, newCard]);
+    if (editCardIndex !== null) {
+      const updated = [...cards];
+      updated[editCardIndex] = newCard;
+      setCards(updated);
+      setEditCardIndex(null);
+    } else {
+      setCards([...cards, newCard]);
+    }
     setNewCard("");
+  };
+
+  const editCard = (i) => {
+    setNewCard(cards[i]);
+    setEditCardIndex(i);
+  };
+
+  const deleteCard = (i) => {
+    const updated = [...cards];
+    updated.splice(i, 1);
+    setCards(updated);
   };
 
   const addIncome = () => {
     if (!newIncome.name || !newIncome.amount) return alert("Enter income");
-    setIncome([...income, { ...newIncome, amount: parseFloat(newIncome.amount) }]);
+    if (editIncomeIndex !== null) {
+      const updated = [...income];
+      updated[editIncomeIndex] = { ...newIncome, amount: parseFloat(newIncome.amount) };
+      setIncome(updated);
+      setEditIncomeIndex(null);
+    } else {
+      setIncome([...income, { ...newIncome, amount: parseFloat(newIncome.amount) }]);
+    }
     setNewIncome({ name: "", amount: "" });
   };
 
+  const editIncome = (i) => {
+    setNewIncome(income[i]);
+    setEditIncomeIndex(i);
+  };
+
+  const deleteIncome = (i) => {
+    const updated = [...income];
+    updated.splice(i, 1);
+    setIncome(updated);
+  };
+
+  // ===== EXPENSES =====
   const handleSubmit = () => {
     if (!form.date || !form.vendor || !form.amount || !form.category) {
       return alert("Fill all fields");
@@ -95,53 +158,60 @@ function ExpenseTracker() {
     React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded" }, "Setup")
   );
 
+  // ===== SETUP PAGE =====
   if (view === "setup") {
     return React.createElement("div", { className: "p-6" },
       nav,
 
+      // Categories
       React.createElement("h2", { className: "text-xl font-bold mb-2" }, "Categories"),
       React.createElement("input", { className: "border p-1 mr-2", placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
       React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
-      React.createElement("button", { type: "button", onClick: addCategory, className: "bg-green-500 text-white px-3 py-1" }, "Add"),
+      React.createElement("button", { type: "button", onClick: addCategory, className: "bg-green-500 text-white px-3 py-1" }, editCatIndex !== null ? "Update" : "Add"),
 
+      categories.map((c, i) => React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+        React.createElement("span", null, `${c.name} - $${c.budget}`),
+        React.createElement("div", null,
+          React.createElement("button", { onClick: () => editCategory(i), className: "text-blue-500 mr-2" }, "Edit"),
+          React.createElement("button", { onClick: () => deleteCategory(i), className: "text-red-500" }, "Delete")
+        )
+      )),
+
+      // Cards
       React.createElement("h2", { className: "mt-6 font-bold" }, "Cards"),
       React.createElement("input", { className: "border p-1 mr-2", placeholder: "Card Name", value: newCard, onChange: e => setNewCard(e.target.value) }),
-      React.createElement("button", { type: "button", onClick: addCard, className: "bg-green-500 text-white px-3 py-1" }, "Add"),
+      React.createElement("button", { type: "button", onClick: addCard, className: "bg-green-500 text-white px-3 py-1" }, editCardIndex !== null ? "Update" : "Add"),
 
+      cards.map((c, i) => React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+        React.createElement("span", null, c),
+        React.createElement("div", null,
+          React.createElement("button", { onClick: () => editCard(i), className: "text-blue-500 mr-2" }, "Edit"),
+          React.createElement("button", { onClick: () => deleteCard(i), className: "text-red-500" }, "Delete")
+        )
+      )),
+
+      // Income
       React.createElement("h2", { className: "mt-6 font-bold" }, "Income"),
       React.createElement("input", { className: "border p-1 mr-2", placeholder: "Source", value: newIncome.name, onChange: e => setNewIncome({ ...newIncome, name: e.target.value }) }),
       React.createElement("input", { className: "border p-1 mr-2", type: "number", placeholder: "Amount", value: newIncome.amount, onChange: e => setNewIncome({ ...newIncome, amount: e.target.value }) }),
-      React.createElement("button", { type: "button", onClick: addIncome, className: "bg-green-500 text-white px-3 py-1" }, "Add")
+      React.createElement("button", { type: "button", onClick: addIncome, className: "bg-green-500 text-white px-3 py-1" }, editIncomeIndex !== null ? "Update" : "Add"),
+
+      income.map((inc, i) => React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+        React.createElement("span", null, `${inc.name} - $${inc.amount}`),
+        React.createElement("div", null,
+          React.createElement("button", { onClick: () => editIncome(i), className: "text-blue-500 mr-2" }, "Edit"),
+          React.createElement("button", { onClick: () => deleteIncome(i), className: "text-red-500" }, "Delete")
+        )
+      ))
     );
   }
 
+  // ===== DASHBOARD =====
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
     nav,
     React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Dashboard"),
 
     React.createElement("div", { className: "mb-4" }, `Income: $${totalIncome} | Spent: $${total}`),
-
-    // 🔥 CATEGORY BUDGET BARS (RESTORED)
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-6" },
-      React.createElement("h3", { className: "font-bold mb-2" }, "Category Budgets"),
-      categories.map(cat => {
-        const spent = expenses.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
-        const percent = cat.budget ? (spent / cat.budget) * 100 : 0;
-
-        return React.createElement("div", { key: cat.name, className: "mb-3" },
-          React.createElement("div", { className: "flex justify-between text-sm" },
-            React.createElement("span", null, cat.name),
-            React.createElement("span", null, `$${spent} / $${cat.budget}`)
-          ),
-          React.createElement("div", { className: "w-full bg-gray-200 h-2 rounded" },
-            React.createElement("div", {
-              className: percent > 100 ? "bg-red-500 h-2" : percent > 80 ? "bg-yellow-400 h-2" : "bg-green-500 h-2",
-              style: { width: Math.min(percent, 100) + "%" }
-            })
-          )
-        );
-      })
-    ),
 
     React.createElement("h3", null, "Add Expense"),
     React.createElement("input", { className: "border p-1 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
@@ -170,9 +240,6 @@ window.onload = () => {
     );
   }
 };
-
-
-
 
     </script>
   </body>

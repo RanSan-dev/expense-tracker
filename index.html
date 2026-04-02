@@ -104,8 +104,79 @@ function ExpenseTracker() {
     React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded shadow" }, "Setup"),
     React.createElement("button", { onClick: () => setView("report"), className: "bg-green-600 text-white px-4 py-2 rounded shadow" }, "Vendor Report"),
     React.createElement("button", { onClick: () => setView("categoryReport"), className: "bg-purple-600 text-white px-4 py-2 rounded shadow" }, "Category Report")
+  );
 
+  // ===== CATEGORY REPORT =====
+  if (view === "categoryReport") {
+    const map = {};
+    expenses.forEach(e => {
+      if (!map[e.category]) map[e.category] = [];
+      map[e.category].push(e);
+    });
 
+    return React.createElement("div", { className: "p-6 bg-white" },
+      nav,
+      React.createElement("h1", { className: "text-xl font-bold mb-4" }, "Category Report"),
+      Object.entries(map).map(([cat, items]) => {
+        const subtotal = items.reduce((s, i) => s + i.amount, 0);
+        return React.createElement("div", { key: cat, className: "mb-4" },
+          React.createElement("h2", { className: "font-bold" }, `${cat} — $${subtotal.toFixed(2)}`),
+          items.map((i, idx) => React.createElement("div", { key: idx }, `${i.date} | ${i.store} | $${i.amount}`))
+        );
+      }),
+      React.createElement("button", { onClick: () => window.print(), className: "mt-4 bg-blue-600 text-white px-4 py-2 rounded" }, "Print")
+    );
+  }
+
+  // ===== DASHBOARD =====
+  return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+    nav,
+    React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Dashboard"),
+
+    React.createElement("div", { className: "mb-4" }, `Total Spent: $${total}`),
+
+    // FORM
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("input", { className: "border p-2 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
+      React.createElement("input", { className: "border p-2 mr-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
+
+      React.createElement("select", { className: "border p-2 mr-2", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
+        React.createElement("option", { value: "" }, "Category"),
+        categories.map(c => React.createElement("option", { key: c.name }, c.name))
+      ),
+
+      React.createElement("select", { className: "border p-2 mr-2", value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
+        React.createElement("option", { value: "" }, "Card"),
+        cards.map(c => React.createElement("option", { key: c }, c))
+      ),
+
+      React.createElement("button", { onClick: handleSubmit, className: "bg-blue-600 text-white px-4 py-2 rounded shadow" }, editExpenseIndex !== null ? "Update" : "Add")
+    ),
+
+    // LIST
+    React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+      expenses.map((e, i) =>
+        React.createElement("div", { key: i, className: "flex justify-between border-b py-2" },
+          React.createElement("span", null, `${e.date} | ${e.store} | $${e.amount}`),
+          React.createElement("div", null,
+            React.createElement("button", { onClick: () => editExpense(i), className: "text-blue-600 mr-2" }, "Edit"),
+            React.createElement("button", { onClick: () => deleteExpense(i), className: "text-red-600" }, "Delete")
+          )
+        )
+      )
+    )
+  );
+}
+
+window.onload = () => {
+  const root = document.getElementById("root");
+  if (root) {
+    ReactDOM.createRoot(root).render(
+      React.createElement(ExpenseTracker)
+    );
+  }
+};
 
     </script>
   </body>

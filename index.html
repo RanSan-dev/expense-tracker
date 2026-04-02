@@ -26,6 +26,8 @@
 
 // 🌐 PHASE 3.1: SETUP LISTING + EDIT/DELETE
 
+// 🌐 PHASE 3.1: SETUP LISTING + EDIT/DELETE
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -252,7 +254,19 @@ function ExpenseTracker() {
       cards.map(c => React.createElement("option", { key: c }, c))
     ),
 
-    React.createElement("button", { type: "button", onClick: handleSubmit, className: "bg-blue-500 text-white px-3 py-1" }, "Add Expense")
+    React.createElement("button", { type: "button", onClick: handleSubmit, className: "bg-blue-500 text-white px-3 py-1" }, "Add Expense"),
+
+    // 📄 EXPENSE LIST (RESTORED)
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mt-6" },
+      React.createElement("h3", { className: "font-bold mb-2" }, "Transactions"),
+      expenses.length === 0
+        ? React.createElement("div", null, "No expenses yet")
+        : expenses.map((e, i) =>
+            React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+              React.createElement("span", null, `${e.date} | ${e.vendor} | $${e.amount} | ${e.category} | ${e.card || "-"}`)
+            )
+          )
+    )
   );
 }
 

@@ -34,6 +34,8 @@
 
 // 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
 
+// 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -172,31 +174,33 @@ function ExpenseTracker() {
     ),
 
     // FORM
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-      React.createElement("input", { placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
-      React.createElement("input", { type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4 space-x-2" },
+      React.createElement("input", { className: "border p-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+      React.createElement("input", { className: "border p-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
+      React.createElement("input", { className: "border p-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
 
-      React.createElement("select", { value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
+      React.createElement("select", { className: "border p-2", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
         React.createElement("option", { value: "" }, "Category"),
         categories.map(c => React.createElement("option", { key: c.name }, c.name))
       ),
 
-      React.createElement("select", { value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
+      React.createElement("select", { className: "border p-2", value: form.card, onChange: e => setForm({ ...form, card: e.target.value }) },
         React.createElement("option", { value: "" }, "Card"),
         cards.map(c => React.createElement("option", { key: c }, c))
       ),
 
-      React.createElement("button", { type: "button", onClick: handleSubmit }, editExpenseIndex !== null ? "Update" : "Add")
+      React.createElement("button", { type: "button", onClick: handleSubmit, className: "bg-blue-600 text-white px-4 py-2 rounded shadow" }, editExpenseIndex !== null ? "Update Expense" : "Add Expense")
     ),
 
     // LIST
     React.createElement("div", { className: "bg-white p-4 rounded shadow" },
       expenses.map((e, i) =>
-        React.createElement("div", { key: i },
-          `${e.date} | ${e.store} | $${e.amount} `,
-          React.createElement("button", { onClick: () => editExpense(i) }, "Edit"),
-          React.createElement("button", { onClick: () => deleteExpense(i) }, "Delete")
+        React.createElement("div", { key: i, className: "flex justify-between border-b py-2" },
+          React.createElement("span", null, `${e.date} | ${e.store} | $${e.amount}`),
+          React.createElement("div", null,
+            React.createElement("button", { onClick: () => editExpense(i), className: "text-blue-600 mr-2" }, "Edit"),
+            React.createElement("button", { onClick: () => deleteExpense(i), className: "text-red-600" }, "Delete")
+          )
         )
       )
     )
@@ -211,6 +215,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

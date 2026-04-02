@@ -30,6 +30,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -141,7 +143,10 @@ function ExpenseTracker() {
   const projectedTotal = currentDay > 0 ? (total / currentDay) * daysInMonth : 0;
 
   // ATM TRACKING
-  const atmSpent = expensesForMonth.filter(e => e.category === "ATM").reduce((s,e)=>s+e.amount,0);
+  // include ATM or Cash category
+  const atmSpent = expensesForMonth
+    .filter(e => e.category === "ATM" || e.category === "Cash")
+    .reduce((s,e)=>s+e.amount,0);
   const atmRemaining = atmBudget - atmSpent;
 
   const yearTotals = {};
@@ -493,6 +498,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

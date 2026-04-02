@@ -40,6 +40,8 @@
 
 // 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
 
+// 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -208,7 +210,11 @@ function ExpenseTracker() {
           placeholder: "Store",
           list: "store-list",
           value: form.store,
-          onChange: e => setForm({ ...form, store: e.target.value })
+          onChange: e => {
+            const val = e.target.value;
+            const match = storeSuggestions.find(s => keyStore(s).startsWith(keyStore(val)));
+            setForm({ ...form, store: match || val });
+          }
         }),
         React.createElement("datalist", { id: "store-list" },
           // filter + rank suggestions (startsWith first, case-insensitive)

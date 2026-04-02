@@ -22,6 +22,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -96,6 +98,24 @@ function ExpenseTracker() {
 
   const expensesForMonth = expenses.filter(e => (e.date || "").startsWith(currentMonth));
   const total = expensesForMonth.reduce((s, e) => s + e.amount, 0);
+
+  // ===== BUDGET + DAILY TRACKING =====
+  const totalBudget = categories.reduce((s, c) => s + (parseFloat(c.budget) || 0), 0);
+
+  const today = new Date();
+  const [year, month] = currentMonth.split("-");
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const currentDay = today.getMonth()+1 == parseInt(month) && today.getFullYear() == parseInt(year)
+    ? today.getDate()
+    : daysInMonth;
+
+  const dailyBudget = totalBudget / daysInMonth;
+  const expectedSpendToDate = dailyBudget * currentDay;
+  const difference = total - expectedSpendToDate;
+
+  // PROJECTED END OF MONTH
+  const projectedTotal = currentDay > 0 ? (total / currentDay) * daysInMonth : 0;
 
   const yearTotals = {};
   expenses.forEach(e => {
@@ -283,6 +303,40 @@ function ExpenseTracker() {
 
     React.createElement("div", { className: "mb-4 font-semibold" }, `Total: $${total}`),
 
+    // TOTAL BUDGET + DAILY STATUS
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold" }, `Monthly Budget: $${totalBudget.toFixed(2)}`),
+      React.createElement("div", null, `Daily Budget: $${dailyBudget.toFixed(2)}`),
+      React.createElement("div", null, `Expected Spend (by today): $${expectedSpendToDate.toFixed(2)}`),
+      React.createElement("div", {
+        className: difference > 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"
+      }, difference > 0
+        ? `Over by $${difference.toFixed(2)}`
+        : `Under by $${Math.abs(difference).toFixed(2)}`)
+    ),
+
+    // PROJECTION
+    React.createElement("div", { className: "mt-2 font-bold" },
+      `Projected End-of-Month: $${projectedTotal.toFixed(2)}`
+    ),
+
+    // EMAIL BUTTON
+    React.createElement("button", {
+      onClick: () => {
+        const subject = encodeURIComponent("Monthly Budget Status");
+        const body = encodeURIComponent(
+          `Month: ${currentMonth}
+Total Spent: $${total}
+Budget: $${totalBudget}
+Daily Budget: $${dailyBudget.toFixed(2)}
+Expected: $${expectedSpendToDate.toFixed(2)}
+Difference: $${difference.toFixed(2)}`
+        );
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      },
+      className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
+    }, "Email Report"),
+
     // CATEGORY BARS (restored)
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       categories.map(cat => {
@@ -359,6 +413,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

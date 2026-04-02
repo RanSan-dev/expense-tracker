@@ -28,6 +28,8 @@
 
 // 🌐 PHASE 3.1: SETUP LISTING + EDIT/DELETE
 
+// 🌐 PHASE 3.1: SETUP LISTING + EDIT/DELETE
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -159,7 +161,8 @@ function ExpenseTracker() {
 
   const nav = React.createElement("div", { className: "flex gap-3 mb-6" },
     React.createElement("button", { onClick: () => setView("dashboard"), className: "bg-blue-500 text-white px-4 py-2 rounded" }, "Dashboard"),
-    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded" }, "Setup")
+    React.createElement("button", { onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded" }, "Setup"),
+    React.createElement("button", { onClick: () => setView("report"), className: "bg-green-600 text-white px-4 py-2 rounded" }, "Report")
   );
 
   // ===== SETUP PAGE =====
@@ -207,6 +210,42 @@ function ExpenseTracker() {
           React.createElement("button", { onClick: () => deleteIncome(i), className: "text-red-500" }, "Delete")
         )
       ))
+    );
+  }
+
+  // ===== REPORT PAGE =====
+  if (view === "report") {
+    // group by vendor
+    const vendorMap = {};
+    expenses.forEach(e => {
+      if (!vendorMap[e.vendor]) vendorMap[e.vendor] = [];
+      vendorMap[e.vendor].push(e);
+    });
+
+    return React.createElement("div", { className: "p-6 bg-white" },
+      nav,
+      React.createElement("h1", { className: "text-2xl font-bold mb-4" }, "Vendor Report"),
+
+      Object.keys(vendorMap).length === 0
+        ? React.createElement("div", null, "No data")
+        : Object.entries(vendorMap).map(([vendor, items]) => {
+            const subtotal = items.reduce((s, i) => s + i.amount, 0);
+
+            return React.createElement("div", { key: vendor, className: "mb-6" },
+              React.createElement("h2", { className: "font-bold" }, `${vendor} — $${subtotal.toFixed(2)}`),
+
+              items.map((i, idx) =>
+                React.createElement("div", { key: idx, className: "text-sm" },
+                  `${i.date} | $${i.amount} | ${i.category}`
+                )
+              )
+            );
+          }),
+
+      React.createElement("button", {
+        onClick: () => window.print(),
+        className: "mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+      }, "Print Report")
     );
   }
 
@@ -278,6 +317,7 @@ window.onload = () => {
     );
   }
 };
+
 
 
     </script>

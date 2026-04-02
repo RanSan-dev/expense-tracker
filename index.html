@@ -36,6 +36,8 @@
 
 // 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
 
+// 🌐 PHASE 4 FIXED: ALL VIEWS RESTORED + NAV WORKING
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -46,15 +48,27 @@ function ExpenseTracker() {
   const [view, setView] = useState("dashboard");
 
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "", card: "" });
+  const [storeSuggestions, setStoreSuggestions] = useState([]);
   const [editExpenseIndex, setEditExpenseIndex] = useState(null);
 
   useEffect(() => {
-    setExpenses(JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
+    const savedExpenses = JSON.parse(localStorage.getItem("expenseAppData") || "[]");
+    setExpenses(savedExpenses);
     setCategories(JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
     setCards(JSON.parse(localStorage.getItem("expenseCards") || "[]"));
+
+    // build store suggestions
+    const uniqueStores = [...new Set(savedExpenses.map(e => e.store).filter(Boolean))];
+    setStoreSuggestions(uniqueStores);
   }, []);
 
-  useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
+  useEffect(() => {
+    localStorage.setItem("expenseAppData", JSON.stringify(expenses));
+
+    // update store suggestions automatically
+    const uniqueStores = [...new Set(expenses.map(e => e.store).filter(Boolean))];
+    setStoreSuggestions(uniqueStores);
+  }, [expenses]);
 
   // ===== EXPENSE =====
   const handleSubmit = () => {
@@ -176,7 +190,18 @@ function ExpenseTracker() {
     // FORM
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4 space-x-2" },
       React.createElement("input", { className: "border p-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-      React.createElement("input", { className: "border p-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
+      React.createElement(React.Fragment, null,
+        React.createElement("input", {
+          className: "border p-2",
+          placeholder: "Store",
+          list: "store-list",
+          value: form.store,
+          onChange: e => setForm({ ...form, store: e.target.value })
+        }),
+        React.createElement("datalist", { id: "store-list" },
+          storeSuggestions.map((s, i) => React.createElement("option", { key: i, value: s }))
+        )
+      ),
       React.createElement("input", { className: "border p-2", type: "number", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
 
       React.createElement("select", { className: "border p-2", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },

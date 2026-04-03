@@ -589,7 +589,6 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
             const text = evt.target.result;
             const rows = text.split("").slice(1).filter(r => r.trim() !== ""); // skip header
 
-
             const newItems = rows
               .map(row => {
                 const cols = row.split(",");

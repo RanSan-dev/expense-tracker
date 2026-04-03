@@ -28,30 +28,17 @@ function ExpenseTracker() {
   const [newCategory, setNewCategory] = useState("");
   const [budgetMap, setBudgetMap] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
 
-  // ⭐ STORE MEMORY
   const [storeList, setStoreList] = useState(() => JSON.parse(localStorage.getItem("expenseStores") || "[]"));
 
-  // 🗓 MONTH SELECTOR
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
   });
 
-  useEffect(() => {
-    localStorage.setItem("expenseAppData", JSON.stringify(expenses));
-  }, [expenses]);
-
-  useEffect(() => {
-    localStorage.setItem("expenseCategories", JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem("expenseBudgets", JSON.stringify(budgetMap));
-  }, [budgetMap]);
-
-  useEffect(() => {
-    localStorage.setItem("expenseStores", JSON.stringify(storeList));
-  }, [storeList]);
+  useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
+  useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
+  useEffect(() => localStorage.setItem("expenseBudgets", JSON.stringify(budgetMap)), [budgetMap]);
+  useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
 
   const getCategory = (store) => {
     const s = store.toLowerCase();
@@ -64,21 +51,13 @@ function ExpenseTracker() {
   const rememberStore = (store) => {
     const s = store.trim();
     if (!s) return;
-
-    setStoreList(prev => {
-      const exists = prev.some(x => x.toLowerCase() === s.toLowerCase());
-      if (exists) return prev;
-      return [...prev, s];
-    });
+    setStoreList(prev => prev.some(x => x.toLowerCase() === s.toLowerCase()) ? prev : [...prev, s]);
   };
 
   const handleSubmit = () => {
     if (!form.date || !form.store || !form.amount) return;
-
     const autoCat = form.category || getCategory(form.store);
-
     rememberStore(form.store);
-
     if (editIndex !== null) {
       const updated = [...expenses];
       updated[editIndex] = { ...form, category: autoCat, amount: parseFloat(form.amount) };
@@ -87,26 +66,11 @@ function ExpenseTracker() {
     } else {
       setExpenses([...expenses, { ...form, category: autoCat, amount: parseFloat(form.amount) }]);
     }
-
     setForm({ date: "", store: "", amount: "", category: "" });
   };
 
-  // 🔥 FILTER BY MONTH
   const filteredExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedMonth));
-
   const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-  const categoryTotals = filteredExpenses.reduce((acc, e) => {
-    const cat = e.category || "Uncategorized";
-    acc[cat] = (acc[cat] || 0) + e.amount;
-    return acc;
-  }, {});
-
-  const budgetData = Object.keys(categoryTotals).map(cat => {
-    const spent = categoryTotals[cat] || 0;
-    const budget = parseFloat(budgetMap[cat] || 0);
-    return { cat, spent, budget };
-  });
 
   const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
     React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
@@ -114,7 +78,7 @@ function ExpenseTracker() {
     React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
   );
 
-  // ================= REPORTS =================
+  // REPORTS
   if (view === "reports") {
     const daysInMonth = new Date(selectedMonth.split("-")[0], selectedMonth.split("-")[1], 0).getDate();
     const today = new Date().getDate();
@@ -122,6 +86,44 @@ function ExpenseTracker() {
     const actualDaily = total / (today || 1);
 
     return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+      nav,
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "text-lg font-bold" }, "Daily Spend"),
+        React.createElement("div", null, `Expected: $${expectedDaily.toFixed(2)} / day`),
+        React.createElement("div", null, `Actual: $${actualDaily.toFixed(2)} / day`)
+      ),
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Email Report"),
+        React.createElement("button", {
+          className: "bg-purple-600 text-white px-3 py-2 rounded mr-2",
+          onClick: () => {
+            const subject = `Expense Report ${selectedMonth}`;
+            const body = encodeURIComponent(
+              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\\n") +
+              `\\nTotal: $${total.toFixed(2)}`
+            );
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+          }
+        }, "Email"),
+        React.createElement("button", {
+          className: "bg-red-600 text-white px-3 py-2 rounded",
+          onClick: () => {
+            const subject = `Expense Report ${selectedMonth}`;
+            const body = encodeURIComponent(
+              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\\n") +
+              `\\nTotal: $${total.toFixed(2)}`
+            );
+            window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
+          }
+        }, "Gmail")
+      )
+    );
+  }
+
+  // DASHBOARD (fallback so app always returns)
+  return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
     nav,
 
     React.createElement("div", { className: "mb-4" },
@@ -136,78 +138,6 @@ function ExpenseTracker() {
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "text-lg font-bold" }, "Monthly Total"),
       React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
-    ),
-
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Email Report"),
-      React.createElement("button", {
-        className: "bg-purple-600 text-white px-3 py-2 rounded mr-2",
-        onClick: () => {
-          const subject = `Expense Report ${selectedMonth}`;
-          const body = encodeURIComponent(filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\n") + `
-Total: $${total.toFixed(2)}`);
-          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
-        }
-      }, "Email"),
-      React.createElement("button", {
-        className: "bg-red-600 text-white px-3 py-2 rounded",
-        onClick: () => {
-          const subject = `Expense Report ${selectedMonth}`;
-          const body = encodeURIComponent(filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\n") + `
-Total: $${total.toFixed(2)}`);
-          window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
-        }
-      }, "Gmail")
-    ),
-
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
-      React.createElement("input", {
-        type: "file",
-        accept: ".csv",
-        onChange: (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
-            const items = rows.map(r => {
-              const [date, store, amount] = r.split(",");
-              if (!date || !store || !amount) return null;
-              const s = store.trim();
-              rememberStore(s);
-              return { date: date.trim(), store: s, amount: Math.abs(parseFloat(amount)), category: getCategory(s) };
-            }).filter(Boolean);
-            const existing = new Set(expenses.map(e => `${e.date.trim()}|${e.store.trim().toLowerCase()}|${e.amount}`));
-            const filtered = items.filter(i => !existing.has(`${i.date.trim()}|${i.store.trim().toLowerCase()}|${i.amount}`));
-            setExpenses([...expenses, ...filtered]);
-          };
-          reader.readAsText(file);
-        }
-      })
-    ),
-
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Add Expense"),
-      React.createElement("input", { className: "border p-2 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Store", list: "stores", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
-      React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
-      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
-      React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, "Add")
-    ),
-
-    React.createElement("div", { className: "bg-white p-4 rounded shadow" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Expenses"),
-      filteredExpenses.map((e,i)=>
-        React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
-          React.createElement("span", null, e.store),
-          React.createElement("div", { className:"flex gap-2" },
-            React.createElement("span", null, `$${e.amount}`),
-            React.createElement("button", { className:"text-blue-600", onClick:()=>{setForm(e);setEditIndex(i);} }, "Edit"),
-            React.createElement("button", { className:"text-red-600", onClick:()=>{ if(confirm('Delete?')) setExpenses(expenses.filter((_,idx)=>idx!==i)); } }, "Delete")
-          )
-        )
-      )
     )
   );
 }
@@ -216,6 +146,5 @@ window.onload = () => {
   const root = ReactDOM.createRoot(document.getElementById("root"));
   root.render(React.createElement(ExpenseTracker));
 };
-
 
   </script>

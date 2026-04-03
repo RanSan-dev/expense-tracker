@@ -26,6 +26,7 @@ function ExpenseTracker() {
 
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "" });
   const [newCategory, setNewCategory] = useState("");
+  const [budgetMap, setBudgetMap] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
 
   useEffect(() => {
     localStorage.setItem("expenseAppData", JSON.stringify(expenses));
@@ -34,6 +35,10 @@ function ExpenseTracker() {
   useEffect(() => {
     localStorage.setItem("expenseCategories", JSON.stringify(categories));
   }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem("expenseBudgets", JSON.stringify(budgetMap));
+  }, [budgetMap]);
 
   const getCategory = (store) => {
     const s = store.toLowerCase();
@@ -68,6 +73,17 @@ function ExpenseTracker() {
     return acc;
   }, {});
 
+  // 🔥 BUDGET VS ACTUAL
+  const budgetData = Object.keys(categoryTotals).map(cat => {
+    const spent = categoryTotals[cat] || 0;
+    const budget = parseFloat(budgetMap[cat] || 0);
+    return { cat, spent, budget };
+  });((acc, e) => {
+    const cat = e.category || "Uncategorized";
+    acc[cat] = (acc[cat] || 0) + e.amount;
+    return acc;
+  }, {});
+
   const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
     React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
     React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
@@ -96,15 +112,24 @@ function ExpenseTracker() {
         }, "Add"),
 
         React.createElement("div", { className: "mt-4" },
-          categories.map((c,i) =>
-            React.createElement("div", { key:i, className: "flex justify-between border-b py-1" },
-              React.createElement("span", null, typeof c === "object" ? c.name : c),
-              React.createElement("button", {
-                className: "text-red-600",
-                onClick: () => setCategories(categories.filter((_,idx)=>idx!==i))
-              }, "Delete")
-            )
-          )
+          categories.map((c,i) => {
+            const name = typeof c === "object" ? c.name : c;
+            return React.createElement("div", { key:i, className: "flex justify-between border-b py-1 items-center" },
+              React.createElement("span", null, name),
+              React.createElement("div", { className: "flex gap-2" },
+                React.createElement("input", {
+                  className: "border p-1 w-20",
+                  placeholder: "Budget",
+                  value: budgetMap[name] || "",
+                  onChange: e => setBudgetMap({ ...budgetMap, [name]: e.target.value })
+                }),
+                React.createElement("button", {
+                  className: "text-red-600",
+                  onClick: () => setCategories(categories.filter((_,idx)=>idx!==i))
+                }, "Delete")
+              )
+            );
+          })
         )
       )
     );
@@ -119,20 +144,20 @@ function ExpenseTracker() {
       React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
     ),
 
-    // CATEGORY TOTALS + BAR GRAPH
+    // CATEGORY TOTALS + BUDGET
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Category Totals"),
+      React.createElement("div", { className: "font-bold mb-2" }, "Budget vs Actual"),
 
-      Object.entries(categoryTotals).map(([cat, amt], i) =>
-        React.createElement("div", { key: i, className: "mb-2" },
+      budgetData.map(({cat, spent, budget}, i) =>
+        React.createElement("div", { key: i, className: "mb-3" },
           React.createElement("div", { className: "flex justify-between text-sm" },
             React.createElement("span", null, cat),
-            React.createElement("span", null, `$${amt.toFixed(2)}`)
+            React.createElement("span", null, `$${spent.toFixed(2)} / $${budget || 0}`)
           ),
           React.createElement("div", { className: "w-full bg-gray-200 h-3 rounded" },
             React.createElement("div", {
-              className: "bg-blue-500 h-3 rounded",
-              style: { width: `${(amt / total) * 100}%` }
+              className: spent > budget ? "bg-red-500 h-3 rounded" : "bg-green-500 h-3 rounded",
+              style: { width: `${budget ? Math.min((spent / budget) * 100, 100) : 0}%` }
             })
           )
         )
@@ -239,5 +264,6 @@ window.onload = () => {
   const root = ReactDOM.createRoot(document.getElementById("root"));
   root.render(React.createElement(ExpenseTracker));
 };
+
 
 </script>

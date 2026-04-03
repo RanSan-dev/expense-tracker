@@ -17,6 +17,7 @@
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
+// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -196,6 +197,71 @@ function ExpenseTracker() {
           )
         )
       )
+    ),
+
+    // CSV IMPORT
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+
+      React.createElement("input", {
+        type: "file",
+        accept: ".csv",
+        onChange: (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const rows = evt.target.result.split("
+").slice(1).filter(r => r.trim());
+
+            const newItems = rows.map(r => {
+              let [date, store, amount] = r.split(",");
+              if (!date || !store || !amount) return null;
+
+              date = date.trim();
+              store = store.trim();
+              amount = Math.abs(parseFloat(amount.trim()));
+
+              return {
+                date,
+                store,
+                amount,
+                category: getCategory(store)
+              };
+            }).filter(Boolean);
+
+            window.csvPreview = newItems;
+            setPreview(newItems);
+          };
+          reader.readAsText(file);
+        }
+      }),
+
+      preview.length > 0 && React.createElement("div", { className: "mt-3" },
+        React.createElement("div", { className: "font-semibold" }, "Preview"),
+        preview.slice(0,5).map((p,i)=>
+          React.createElement("div", { key:i, className: "text-sm" }, `${p.store} → ${p.category || "Uncategorized"}`)
+        )
+      ),
+
+      React.createElement("button", {
+        className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
+        onClick: () => {
+          if (!window.csvPreview) return;
+
+          const existing = new Set(expenses.map(e => `${e.date.trim()}|${e.store.trim().toLowerCase()}|${e.amount}`));
+
+          const filtered = window.csvPreview.filter(i => {
+            const key = `${i.date.trim()}|${i.store.trim().toLowerCase()}|${i.amount}`;
+            return !existing.has(key);
+          });
+
+          setExpenses([...expenses, ...filtered]);
+          setPreview([]);
+          window.csvPreview = [];
+        }
+      }, "Import Data")
     ),
 
     // FORM

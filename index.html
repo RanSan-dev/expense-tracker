@@ -38,6 +38,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -468,7 +470,8 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
           </div>
         </div>`;
 
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodeURIComponent(htmlBody)}`;
+        // IMPORTANT: Gmail ignores HTML in body param, use clean formatted text instead
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
         window.open(gmailUrl, '_blank');
       },
       className: "mb-4 bg-green-600 text-white px-4 py-2 rounded shadow"
@@ -574,7 +577,6 @@ window.onload = () => {
     );
   }
 };
-
 
     </script>
   </body>

@@ -14,7 +14,7 @@
     <div id="root"></div>
 
  <script>
- // UI UPGRADE + SETUP PAGE
+// UI UPGRADE + SETUP PAGE
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -88,5 +88,119 @@ function ExpenseTracker() {
 
   // ================= DASHBOARD =================
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+    nav,
+
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "text-lg font-bold" }, "Monthly Total"),
+      React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
+    ),
+
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+
+      React.createElement("input", {
+        type: "file",
+        accept: ".csv",
+        onChange: (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+
+            const newItems = rows.map(r => {
+              const [date, store, amount] = r.split(",");
+              return {
+                date,
+                store,
+                amount: Math.abs(parseFloat(amount)),
+                category: ""
+              };
+            });
+
+            window.csvPreview = newItems;
+            setPreview(newItems);
+          };
+          reader.readAsText(file);
+        }
+      }),
+
+      preview.length > 0 && React.createElement("div", { className: "mt-3" },
+        React.createElement("div", { className: "font-semibold" }, "Preview"),
+        preview.slice(0,5).map((p,i)=>
+          React.createElement("div", { key:i, className: "text-sm" }, `${p.store} $${p.amount}`)
+        )
+      ),
+
+      React.createElement("button", {
+        className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
+        onClick: () => {
+          if (!window.csvPreview) return;
+
+          const existing = new Set(expenses.map(e => `${e.date}|${e.store}|${e.amount}`));
+          const filtered = window.csvPreview.filter(i => !existing.has(`${i.date}|${i.store}|${i.amount}`));
+
+          setExpenses([...expenses, ...filtered]);
+          setPreview([]);
+          window.csvPreview = [];
+        }
+      }, "Import Data")
+    ),
+
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold mb-2" }, "Add Expense"),
+
+      React.createElement("input", { className: "border p-2 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
+      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
+
+      React.createElement("select", {
+        className: "border p-2 mr-2",
+        value: form.category,
+        onChange: e => setForm({ ...form, category: e.target.value })
+      },
+        React.createElement("option", { value: "" }, "Category"),
+        categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+      ),
+
+      React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, "Add")
+    ),
+
+    React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+      React.createElement("div", { className: "font-bold mb-2" }, "Expenses"),
+
+      expenses.map((e,i)=>
+        React.createElement("div", { key:i, className: "flex justify-between border-b py-2" },
+          React.createElement("div", null,
+            React.createElement("div", { className: "font-medium" }, e.store),
+            React.createElement("div", { className: "text-xs text-gray-500" }, `${e.date} ${e.category || ""}`)
+          ),
+          React.createElement("div", { className: "font-bold" }, `$${e.amount}`)
+        )
+      )
+    )
+  );
+}
+
+window.onload = () => {
+  try {
+    const rootEl = document.getElementById("root");
+    if (!rootEl) {
+      document.body.innerText = "Root not found";
+      return;
+    }
+    if (!window.React || !window.ReactDOM) {
+      document.body.innerText = "React not loaded";
+      return;
+    }
+    const root = ReactDOM.createRoot(rootEl);
+    root.render(React.createElement(ExpenseTracker));
+  } catch (err) {
+    console.error(err);
+    const rootEl = document.getElementById("root");
+    if (rootEl) rootEl.innerText = "App error: " + err.message;
+  }
+};
 
 </script>

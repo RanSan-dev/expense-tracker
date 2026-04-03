@@ -14,24 +14,30 @@
     <div id="root"></div>
 
  <script>
- // UI UPGRADE VERSION
+ // UI UPGRADE + SETUP PAGE
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
   const [view, setView] = useState("dashboard");
   const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
+  const [categories, setCategories] = useState(() => JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
   const [preview, setPreview] = useState([]);
 
-  const [form, setForm] = useState({ date: "", store: "", amount: "" });
+  const [form, setForm] = useState({ date: "", store: "", amount: "", category: "" });
+  const [newCategory, setNewCategory] = useState("");
 
   useEffect(() => {
     localStorage.setItem("expenseAppData", JSON.stringify(expenses));
   }, [expenses]);
 
+  useEffect(() => {
+    localStorage.setItem("expenseCategories", JSON.stringify(categories));
+  }, [categories]);
+
   const handleSubmit = () => {
     if (!form.date || !form.store || !form.amount) return;
     setExpenses([...expenses, { ...form, amount: parseFloat(form.amount) }]);
-    setForm({ date: "", store: "", amount: "" });
+    setForm({ date: "", store: "", amount: "", category: "" });
   };
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -41,110 +47,46 @@ function ExpenseTracker() {
     React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
   );
 
+  // ================= SETUP PAGE =================
   if (view === "setup") {
-    return React.createElement("div", { className: "p-6" },
+    return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
-      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
-        React.createElement("h2", { className: "text-xl font-bold" }, "Setup Coming Soon")
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Categories"),
+
+        React.createElement("input", {
+          className: "border p-2 mr-2",
+          placeholder: "New Category",
+          value: newCategory,
+          onChange: e => setNewCategory(e.target.value)
+        }),
+
+        React.createElement("button", {
+          className: "bg-blue-600 text-white px-3 py-2 rounded",
+          onClick: () => {
+            if (!newCategory) return;
+            setCategories([...categories, newCategory]);
+            setNewCategory("");
+          }
+        }, "Add"),
+
+        React.createElement("div", { className: "mt-4" },
+          categories.map((c,i) =>
+            React.createElement("div", { key:i, className: "flex justify-between border-b py-1" },
+              React.createElement("span", null, c),
+              React.createElement("button", {
+                className: "text-red-600",
+                onClick: () => setCategories(categories.filter((_,idx)=>idx!==i))
+              }, "Delete")
+            )
+          )
+        )
       )
     );
   }
 
+  // ================= DASHBOARD =================
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-    nav,
-
-    // SUMMARY CARD
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "text-lg font-bold" }, "Monthly Total"),
-      React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
-    ),
-
-    // CSV IMPORT
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
-
-      React.createElement("input", {
-        type: "file",
-        accept: ".csv",
-        onChange: (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
-
-            const newItems = rows.map(r => {
-              const [date, store, amount] = r.split(",");
-              return {
-                date,
-                store,
-                amount: Math.abs(parseFloat(amount))
-              };
-            });
-
-            window.csvPreview = newItems;
-            setPreview(newItems);
-          };
-          reader.readAsText(file);
-        }
-      }),
-
-      preview.length > 0 && React.createElement("div", { className: "mt-3" },
-        React.createElement("div", { className: "font-semibold" }, "Preview"),
-        preview.slice(0,5).map((p,i)=>
-          React.createElement("div", { key:i, className: "text-sm" }, `${p.store} $${p.amount}`)
-        )
-      ),
-
-      React.createElement("button", {
-        className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
-        onClick: () => {
-          if (!window.csvPreview) return;
-
-          const existing = new Set(expenses.map(e => `${e.date}|${e.store}|${e.amount}`));
-
-          const filtered = window.csvPreview.filter(i => !existing.has(`${i.date}|${i.store}|${i.amount}`));
-
-          setExpenses([...expenses, ...filtered]);
-          setPreview([]);
-          window.csvPreview = [];
-        }
-      }, "Import Data")
-    ),
-
-    // FORM CARD
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Add Expense"),
-
-      React.createElement("input", { className: "border p-2 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
-      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
-
-      React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, "Add")
-    ),
-
-    // EXPENSE LIST
-    React.createElement("div", { className: "bg-white p-4 rounded shadow" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Expenses"),
-
-      expenses.map((e,i)=>
-        React.createElement("div", { key:i, className: "flex justify-between border-b py-2" },
-          React.createElement("div", null,
-            React.createElement("div", { className: "font-medium" }, e.store),
-            React.createElement("div", { className: "text-xs text-gray-500" }, e.date)
-          ),
-          React.createElement("div", { className: "font-bold" }, `$${e.amount}`)
-        )
-      )
-    )
-  );
-}
-
-window.onload = () => {
-  const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(React.createElement(ExpenseTracker));
-};
-
 
 </script>

@@ -19,6 +19,7 @@
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
+// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS + STORE MEMORY
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -31,6 +32,9 @@ function ExpenseTracker() {
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "" });
   const [newCategory, setNewCategory] = useState("");
   const [budgetMap, setBudgetMap] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
+
+  // ⭐ STORE MEMORY
+  const [storeList, setStoreList] = useState(() => JSON.parse(localStorage.getItem("expenseStores") || "[]"));
 
   // 🗓 MONTH SELECTOR
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -50,6 +54,10 @@ function ExpenseTracker() {
     localStorage.setItem("expenseBudgets", JSON.stringify(budgetMap));
   }, [budgetMap]);
 
+  useEffect(() => {
+    localStorage.setItem("expenseStores", JSON.stringify(storeList));
+  }, [storeList]);
+
   const getCategory = (store) => {
     const s = store.toLowerCase();
     if (s.includes("fred meyer") || s.includes("safeway") || s.includes("costco")) return "Groceries";
@@ -58,10 +66,20 @@ function ExpenseTracker() {
     return "";
   };
 
+  const rememberStore = (store) => {
+    const s = store.trim();
+    if (!s) return;
+    if (!storeList.map(x => x.toLowerCase()).includes(s.toLowerCase())) {
+      setStoreList([...storeList, s]);
+    }
+  };
+
   const handleSubmit = () => {
     if (!form.date || !form.store || !form.amount) return;
 
     const autoCat = form.category || getCategory(form.store);
+
+    rememberStore(form.store);
 
     if (editIndex !== null) {
       const updated = [...expenses];
@@ -223,6 +241,8 @@ function ExpenseTracker() {
               store = store.trim();
               amount = Math.abs(parseFloat(amount.trim()));
 
+              rememberStore(store);
+
               return {
                 date,
                 store,
@@ -269,7 +289,19 @@ function ExpenseTracker() {
       React.createElement("div", { className: "font-bold mb-2" }, editIndex !== null ? "Edit Expense" : "Add Expense"),
 
       React.createElement("input", { className: "border p-2 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
-      React.createElement("input", { className: "border p-2 mr-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
+      React.createElement("input", { 
+        className: "border p-2 mr-2", 
+        placeholder: "Store", 
+        list: "storeSuggestions",
+        value: form.store, 
+        onChange: e => setForm({ ...form, store: e.target.value }) 
+      }),
+
+      // 🔽 STORE AUTOCOMPLETE LIST
+      React.createElement("datalist", { id: "storeSuggestions" },
+        storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))
+      ),
+
       React.createElement("input", { className: "border p-2 mr-2", placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }) }),
 
       React.createElement("select", {

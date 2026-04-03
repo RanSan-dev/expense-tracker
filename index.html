@@ -585,7 +585,7 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
           if (!file) return;
 
         value: form.store,
-        onChange: e => {
+        onChange e => {
           const val = e.target.value;
           const match = storeSuggestions.find(s => keyStore(s).startsWith(keyStore(val)));
           setForm({ ...form, store: match || val });

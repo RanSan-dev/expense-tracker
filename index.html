@@ -14,7 +14,7 @@
     <div id="root"></div>
 
   <script>
- // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS + STORE MEMORY + REPORTS
+// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS + STORE MEMORY + REPORTS
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -144,7 +144,7 @@ function ExpenseTracker() {
         className: "bg-purple-600 text-white px-3 py-2 rounded mr-2",
         onClick: () => {
           const subject = `Expense Report ${selectedMonth}`;
-          const body = encodeURIComponent(filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("") + `
+          const body = encodeURIComponent(filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\n") + `
 Total: $${total.toFixed(2)}`);
           window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
         }
@@ -153,7 +153,7 @@ Total: $${total.toFixed(2)}`);
         className: "bg-red-600 text-white px-3 py-2 rounded",
         onClick: () => {
           const subject = `Expense Report ${selectedMonth}`;
-          const body = encodeURIComponent(filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("") + `
+          const body = encodeURIComponent(filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\n") + `
 Total: $${total.toFixed(2)}`);
           window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
         }
@@ -170,7 +170,7 @@ Total: $${total.toFixed(2)}`);
           if (!file) return;
           const reader = new FileReader();
           reader.onload = (evt) => {
-            const rows = evt.target.result.split("").slice(1).filter(r => r.trim());
+            const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
             const items = rows.map(r => {
               const [date, store, amount] = r.split(",");
               if (!date || !store || !amount) return null;
@@ -216,5 +216,6 @@ window.onload = () => {
   const root = ReactDOM.createRoot(document.getElementById("root"));
   root.render(React.createElement(ExpenseTracker));
 };
+
 
   </script>

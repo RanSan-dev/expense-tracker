@@ -74,7 +74,7 @@ function ExpenseTracker() {
         React.createElement("div", { className: "mt-4" },
           categories.map((c,i) =>
             React.createElement("div", { key:i, className: "flex justify-between border-b py-1" },
-              React.createElement("span", null, c),
+              React.createElement("span", null, typeof c === "object" ? c.name : c),
               React.createElement("button", {
                 className: "text-red-600",
                 onClick: () => setCategories(categories.filter((_,idx)=>idx!==i))
@@ -161,7 +161,10 @@ function ExpenseTracker() {
         onChange: e => setForm({ ...form, category: e.target.value })
       },
         React.createElement("option", { value: "" }, "Category"),
-        categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+        categories.map((c,i)=>{
+          const name = typeof c === "object" ? c.name : c;
+          return React.createElement("option", { key:i, value:name }, name);
+        })
       ),
 
       React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, "Add")
@@ -202,6 +205,5 @@ window.onload = () => {
     if (rootEl) rootEl.innerText = "App error: " + err.message;
   }
 };
-
 
 </script>

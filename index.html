@@ -355,8 +355,7 @@ Total: $${total.toFixed(2)}`;
             const totalLine = `
 Total: $${total.toFixed(2)}`;
 
-            const body = encodeURIComponent(bodyLines.join("
-") + totalLine);
+            const body = encodeURIComponent(bodyLines.join("") + totalLine);
 
             const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`;
 

@@ -550,7 +550,7 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
           const reader = new FileReader();
           reader.onload = (evt) => {
             const text = evt.target.result;
- const rows = text.split(String.fromCharCode(10)).slice(1).filter(r => r.trim());
+            const rows = text.split(String.fromCharCode(10)).slice(1).filter(r => r.trim());
 
             const newItems = rows
               .map(row => {
@@ -584,7 +584,22 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
         }
       }),
 
-      React.createElement("button", {
+      // PREVIEW TABLE
+      preview.length > 0 &&
+      React.createElement("div", { className: "mt-4 border p-2 bg-gray-50" },
+        React.createElement("div", { className: "font-bold mb-2" }, "CSV Preview"),
+
+        preview.slice(0,10).map((item, i) =>
+          React.createElement("div", { key: i, className: "text-sm border-b py-1" },
+            `${item.date} | ${item.store} | $${item.amount}`
+          )
+        ),
+
+        preview.length > 10 &&
+        React.createElement("div", { className: "text-xs text-gray-500" }, "...more rows")
+      ),
+
+      React.createElement("button", { {
         onClick: () => {
           if (!window.csvPreview || !window.csvPreview.length) {
             alert("No CSV loaded");
@@ -654,7 +669,6 @@ window.onload = () => {
     );
   }
 };
-
 
     </script>
   </body>

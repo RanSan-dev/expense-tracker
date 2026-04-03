@@ -14,7 +14,7 @@
     <div id="root"></div>
 
  <script>
-// UI UPGRADE + SETUP PAGE
+   // UI + SETUP + AUTO CATEGORY
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -34,20 +34,39 @@ function ExpenseTracker() {
     localStorage.setItem("expenseCategories", JSON.stringify(categories));
   }, [categories]);
 
+  // 🔥 AUTO CATEGORY RULES
+  const getCategory = (store) => {
+    const s = store.toLowerCase();
+    if (s.includes("fred meyer") || s.includes("safeway") || s.includes("costco")) return "Groceries";
+    if (s.includes("shell") || s.includes("chevron") || s.includes("fuel")) return "Fuel";
+    if (s.includes("amazon") || s.includes("target")) return "Shopping";
+    return "";
+  };
+
   const handleSubmit = () => {
     if (!form.date || !form.store || !form.amount) return;
-    setExpenses([...expenses, { ...form, amount: parseFloat(form.amount) }]);
+
+    const autoCat = form.category || getCategory(form.store);
+
+    setExpenses([...expenses, { ...form, category: autoCat, amount: parseFloat(form.amount) }]);
     setForm({ date: "", store: "", amount: "", category: "" });
   };
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  // 🔥 CATEGORY TOTALS
+  const categoryTotals = expenses.reduce((acc, e) => {
+    const cat = e.category || "Uncategorized";
+    acc[cat] = (acc[cat] || 0) + e.amount;
+    return acc;
+  }, {});
 
   const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
     React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
     React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
   );
 
-  // ================= SETUP PAGE =================
+  // ================= SETUP =================
   if (view === "setup") {
     return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
@@ -95,6 +114,21 @@ function ExpenseTracker() {
       React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
     ),
 
+    // CATEGORY TOTALS DISPLAY
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold mb-2" }, "Category Totals"),
+
+      Object.keys(categoryTotals).length === 0
+        ? React.createElement("div", { className: "text-gray-500" }, "No data yet")
+        : Object.entries(categoryTotals).map(([cat, amt], i) =>
+            React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+              React.createElement("span", null, cat),
+              React.createElement("span", { className: "font-semibold" }, `$${amt.toFixed(2)}`)
+            )
+          )
+    ),
+
+    // CSV IMPORT
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
 
@@ -115,7 +149,7 @@ function ExpenseTracker() {
                 date,
                 store,
                 amount: Math.abs(parseFloat(amount)),
-                category: ""
+                category: getCategory(store)
               };
             });
 
@@ -129,7 +163,7 @@ function ExpenseTracker() {
       preview.length > 0 && React.createElement("div", { className: "mt-3" },
         React.createElement("div", { className: "font-semibold" }, "Preview"),
         preview.slice(0,5).map((p,i)=>
-          React.createElement("div", { key:i, className: "text-sm" }, `${p.store} $${p.amount}`)
+          React.createElement("div", { key:i, className: "text-sm" }, `${p.store} → ${p.category || "Uncategorized"}`)
         )
       ),
 
@@ -148,6 +182,7 @@ function ExpenseTracker() {
       }, "Import Data")
     ),
 
+    // FORM
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "font-bold mb-2" }, "Add Expense"),
 
@@ -160,7 +195,7 @@ function ExpenseTracker() {
         value: form.category,
         onChange: e => setForm({ ...form, category: e.target.value })
       },
-        React.createElement("option", { value: "" }, "Category"),
+        React.createElement("option", { value: "" }, "Auto / Select Category"),
         categories.map((c,i)=>{
           const name = typeof c === "object" ? c.name : c;
           return React.createElement("option", { key:i, value:name }, name);
@@ -170,6 +205,7 @@ function ExpenseTracker() {
       React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, "Add")
     ),
 
+    // LIST
     React.createElement("div", { className: "bg-white p-4 rounded shadow" },
       React.createElement("div", { className: "font-bold mb-2" }, "Expenses"),
 
@@ -177,7 +213,7 @@ function ExpenseTracker() {
         React.createElement("div", { key:i, className: "flex justify-between border-b py-2" },
           React.createElement("div", null,
             React.createElement("div", { className: "font-medium" }, e.store),
-            React.createElement("div", { className: "text-xs text-gray-500" }, `${e.date} ${e.category || ""}`)
+            React.createElement("div", { className: "text-xs text-gray-500" }, `${e.date} • ${e.category || "Uncategorized"}`)
           ),
           React.createElement("div", { className: "font-bold" }, `$${e.amount}`)
         )
@@ -187,23 +223,8 @@ function ExpenseTracker() {
 }
 
 window.onload = () => {
-  try {
-    const rootEl = document.getElementById("root");
-    if (!rootEl) {
-      document.body.innerText = "Root not found";
-      return;
-    }
-    if (!window.React || !window.ReactDOM) {
-      document.body.innerText = "React not loaded";
-      return;
-    }
-    const root = ReactDOM.createRoot(rootEl);
-    root.render(React.createElement(ExpenseTracker));
-  } catch (err) {
-    console.error(err);
-    const rootEl = document.getElementById("root");
-    if (rootEl) rootEl.innerText = "App error: " + err.message;
-  }
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(React.createElement(ExpenseTracker));
 };
 
 </script>

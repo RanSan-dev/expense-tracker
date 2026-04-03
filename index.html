@@ -321,23 +321,51 @@ function ExpenseTracker() {
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "font-bold mb-2" }, "Email Report"),
 
-      React.createElement("button", {
-        className: "bg-purple-600 text-white px-4 py-2 rounded",
-        onClick: () => {
-          const subject = `Expense Report ${selectedMonth}`;
+      React.createElement("div", { className: "flex gap-3" },
 
-          const bodyLines = filteredExpenses.map(e =>
-            `${e.date} | ${e.store} | $${e.amount} | ${e.category || ""}`
-          );
+        // DEFAULT EMAIL (mailto)
+        React.createElement("button", {
+          className: "bg-purple-600 text-white px-4 py-2 rounded",
+          onClick: () => {
+            const subject = `Expense Report ${selectedMonth}`;
 
-          const totalLine = `
+            const bodyLines = filteredExpenses.map(e =>
+              `${e.date} | ${e.store} | $${e.amount} | ${e.category || ""}`
+            );
+
+            const totalLine = `
 Total: $${total.toFixed(2)}`;
 
-          const body = encodeURIComponent(bodyLines.join("") + totalLine);
+            const body = encodeURIComponent(bodyLines.join("
+") + totalLine);
 
-          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
-        }
-      }, "Send Email")
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+          }
+        }, "Email (Default)"),
+
+        // GMAIL DIRECT
+        React.createElement("button", {
+          className: "bg-red-600 text-white px-4 py-2 rounded",
+          onClick: () => {
+            const subject = `Expense Report ${selectedMonth}`;
+
+            const bodyLines = filteredExpenses.map(e =>
+              `${e.date} | ${e.store} | $${e.amount} | ${e.category || ""}`
+            );
+
+            const totalLine = `
+Total: $${total.toFixed(2)}`;
+
+            const body = encodeURIComponent(bodyLines.join("
+") + totalLine);
+
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`;
+
+            window.open(gmailUrl, "_blank");
+          }
+        }, "Open in Gmail")
+
+      )
     ),
 
     // LIST
@@ -378,6 +406,7 @@ window.onload = () => {
   const root = ReactDOM.createRoot(document.getElementById("root"));
   root.render(React.createElement(ExpenseTracker));
 };
+
 
 
 </script>

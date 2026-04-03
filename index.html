@@ -19,7 +19,7 @@ const { useState, useEffect } = React;
 
 function ExpenseTracker() {
   const [view, setView] = useState("dashboard");
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
   const [categories, setCategories] = useState([]);
   const [cards, setCards] = useState([]);
   const [preview, setPreview] = useState([]);
@@ -27,7 +27,6 @@ function ExpenseTracker() {
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "", card: "" });
 
   useEffect(() => {
-    setExpenses(JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
     setCategories(JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
     setCards(JSON.parse(localStorage.getItem("expenseCards") || "[]"));
   }, []);
@@ -105,7 +104,11 @@ function ExpenseTracker() {
 
           const filtered = window.csvPreview.filter(i => !existing.has(`${i.date}|${i.store}|${i.amount}`));
 
-          setExpenses([...expenses, ...filtered]);
+          setExpenses(prev => {
+            const updated = [...prev, ...filtered];
+            localStorage.setItem("expenseAppData", JSON.stringify(updated));
+            return updated;
+          });
           setPreview([]);
           window.csvPreview = [];
         }
@@ -132,7 +135,6 @@ window.onload = () => {
     React.createElement(ExpenseTracker)
   );
 };
-
 
     </script>
   </body>

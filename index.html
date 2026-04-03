@@ -14,11 +14,6 @@
     <div id="root"></div>
 
  <script>
-// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH
-// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH
-// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
-// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
-// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS
 // UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS + STORE MEMORY
 const { useState, useEffect } = React;
 
@@ -69,9 +64,12 @@ function ExpenseTracker() {
   const rememberStore = (store) => {
     const s = store.trim();
     if (!s) return;
-    if (!storeList.map(x => x.toLowerCase()).includes(s.toLowerCase())) {
-      setStoreList([...storeList, s]);
-    }
+
+    setStoreList(prev => {
+      const exists = prev.some(x => x.toLowerCase() === s.toLowerCase());
+      if (exists) return prev;
+      return [...prev, s];
+    });
   };
 
   const handleSubmit = () => {

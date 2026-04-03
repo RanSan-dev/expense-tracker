@@ -40,6 +40,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -168,7 +170,8 @@ function ExpenseTracker() {
     React.createElement("button", { type: "button", onClick: () => setView("setup"), className: "bg-gray-700 text-white px-4 py-2 rounded shadow" }, "Setup"),
     React.createElement("button", { type: "button", onClick: () => setView("report"), className: "bg-green-600 text-white px-4 py-2 rounded shadow" }, "Vendor Report"),
     React.createElement("button", { type: "button", onClick: () => setView("categoryReport"), className: "bg-purple-600 text-white px-4 py-2 rounded shadow" }, "Category Report"),
-    React.createElement("button", { type: "button", onClick: () => setView("yearSummary"), className: "bg-orange-600 text-white px-4 py-2 rounded shadow" }, "Year Summary")
+    React.createElement("button", { type: "button", onClick: () => setView("yearSummary"), className: "bg-orange-600 text-white px-4 py-2 rounded shadow" }, "Year Summary"),
+    React.createElement("button", { type: "button", onClick: () => setView("print"), className: "bg-black text-white px-4 py-2 rounded shadow" }, "Print Report") className: "bg-orange-600 text-white px-4 py-2 rounded shadow" }, "Year Summary")
   );
 
   // ===== SETUP (FULL RESTORE) =====
@@ -335,6 +338,45 @@ function ExpenseTracker() {
       Object.entries(yearTotals).map(([cat, total]) =>
         React.createElement("div", { key: cat }, `${cat}: $${total.toFixed(2)}`)
       )
+    );
+  }
+
+  // PRINTABLE REPORT
+  if (view === "print") {
+    return React.createElement("div", { className: "p-6 bg-white" },
+      React.createElement("h1", { className: "text-2xl font-bold mb-4" }, `Monthly Report (${currentMonth})`),
+
+      React.createElement("div", { className: "mb-4" },
+        React.createElement("strong", null, `Total Spent: $${total.toFixed(2)}`),
+        React.createElement("div", null, `Budget: $${totalBudget.toFixed(2)}`),
+        React.createElement("div", null, `Projected: $${projectedTotal.toFixed(2)}`)
+      ),
+
+      React.createElement("div", { className: "mb-4" },
+        React.createElement("h2", { className: "font-bold" }, "Categories"),
+        categories.map(cat => {
+          const spent = expensesForMonth.filter(e => e.category === cat.name).reduce((s,e)=>s+e.amount,0);
+          const allocated = parseFloat(cat.budget) || 0;
+          const remaining = allocated - spent;
+
+          return React.createElement("div", { key: cat.name, className: "flex justify-between border-b py-1" },
+            React.createElement("span", null, cat.name),
+            React.createElement("span", null,
+              remaining < 0 ? `Over $${Math.abs(remaining).toFixed(2)}` : `$${remaining.toFixed(2)} left`
+            )
+          );
+        })
+      ),
+
+      React.createElement("button", {
+        onClick: () => window.print(),
+        className: "mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+      }, "Print / Save PDF"),
+
+      React.createElement("button", {
+        onClick: () => setView("dashboard"),
+        className: "mt-4 ml-2 bg-gray-600 text-white px-4 py-2 rounded"
+      }, "Back")
     );
   }
 
@@ -577,6 +619,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

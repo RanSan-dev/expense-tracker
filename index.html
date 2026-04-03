@@ -36,6 +36,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -399,8 +401,7 @@ function ExpenseTracker() {
           .sort((a,b) => (b.pct - a.pct) || (a.remaining - b.remaining))
           .slice(0,3)
           .map(c => `• ${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remaining).toFixed(2)}` : `$${c.remaining.toFixed(2)} left`}`)
-          .join("
-");
+          .join("\n");
 
         const statusEmoji = burnDiff > 0 ? "🔴" : burnDiff > -50 ? "🟡" : "🟢";
 
@@ -427,8 +428,7 @@ Remaining: $${atmRemaining.toFixed(2)}
 ${top3}
 
 📂 CATEGORIES
-${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remaining).toFixed(2)}` : `$${c.remaining.toFixed(2)} left`}`).join("
-")}
+${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remaining).toFixed(2)}` : `$${c.remaining.toFixed(2)} left`}`).join("\n")}
 
 — Sent from Budget App`
         );
@@ -459,8 +459,7 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
           <br/>
           <div>
             <strong>⚠️ Top 3</strong><br/>
-            ${top3.replace(/
-/g,'<br/>')}
+            ${top3.replace(/\n/g,'<br/>')}
           </div>
           <br/>
           <div>
@@ -575,6 +574,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

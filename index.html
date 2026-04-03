@@ -52,6 +52,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -577,6 +579,7 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
     // CSV IMPORT (NEW)
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+
       React.createElement("input", {
         type: "file",
         accept: ".csv",
@@ -584,8 +587,66 @@ ${catStats.map(c => `${c.name}: ${c.remaining < 0 ? `Over $${Math.abs(c.remainin
           const file = e.target.files[0];
           if (!file) return;
 
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const text = evt.target.result;
+            const rows = text.split("
+").slice(1).filter(r => r.trim() !== "");
+
+            const newItems = rows
+              .map(row => {
+                const cols = row.split(",");
+                if (cols.length < 3) return null;
+
+                let [date, store, amount] = cols;
+                if (!date || !store || !amount) return null;
+
+                const parsedDate = new Date(date);
+                const formattedDate = isNaN(parsedDate) ? "" : parsedDate.toISOString().slice(0,10);
+
+                const amt = Math.abs(parseFloat(amount));
+
+                return {
+                  date: formattedDate,
+                  store: store.trim(),
+                  amount: amt,
+                  category: "",
+                  card: ""
+                };
+              })
+              .filter(Boolean);
+
+            window.csvPreview = newItems;
+            alert(newItems.length + " items ready to import");
+          };
+
+          reader.readAsText(file);
+        }
+      }),
+
+      React.createElement("button", {
+        onClick: () => {
+          if (!window.csvPreview || !window.csvPreview.length) {
+            alert("No CSV loaded");
+            return;
+          }
+          setExpenses(prev => [...prev, ...window.csvPreview]);
+          window.csvPreview = [];
+          alert("CSV Imported!");
+        },
+        className: "mt-2 bg-blue-600 text-white px-4 py-2 rounded shadow"
+      }, "Import Data")
+    ),
+
+    // FORM
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4 space-x-2" },
+      React.createElement("input", { className: "border p-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
+      React.createElement("input", {
+        className: "border p-2",
+        placeholder: "Store",
+        list: "store-list",
         value: form.store,
-        onChange e => {
+        onChange: e => {
           const val = e.target.value;
           const match = storeSuggestions.find(s => keyStore(s).startsWith(keyStore(val)));
           setForm({ ...form, store: match || val });
@@ -632,6 +693,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

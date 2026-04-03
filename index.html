@@ -60,6 +60,8 @@
 
 // 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
 
+// 🌐 PHASE 5.1 FIX: RESTORE ALL VIEWS (NAV WORKING)
+
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -217,6 +219,96 @@ function ExpenseTracker() {
     }
 
     setNewCategory({ name: "", budget: "" });
+  };
+
+  const addCard = () => {
+    if (!newCard) return alert("Enter card name");
+
+    if (editCardIndex !== null) {
+      const updated = [...cards];
+      updated[editCardIndex] = newCard;
+      setCards(updated);
+      setEditCardIndex(null);
+    } else {
+      setCards([...cards, newCard]);
+    }
+
+    setNewCard("");
+  };
+
+  if (view === "setup") {
+    return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+      nav,
+
+      // ATM SETUP (NEW)
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("h2", { className: "font-bold mb-2" }, "ATM / Cash Pool"),
+        React.createElement("input", {
+          className: "border p-2 mr-2",
+          type: "number",
+          placeholder: "Monthly ATM Budget",
+          value: atmBudget,
+          onChange: e => setAtmBudget(parseFloat(e.target.value) || 0)
+        })
+      ),
+
+      // CATEGORIES
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("h2", { className: "font-bold mb-2" }, "Categories"),
+
+        React.createElement("input", { className: "border p-2 mr-2", placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
+        React.createElement("input", { className: "border p-2 mr-2", type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
+
+        React.createElement("button", { onClick: addCategory, className: "bg-blue-600 text-white px-3 py-1 rounded" }, editCatIndex !== null ? "Update" : "Add"),
+
+        categories.map((c, i) =>
+          React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+            React.createElement("span", null, `${c.name} - $${c.budget}`),
+            React.createElement("div", null,
+              React.createElement("button", {
+                onClick: () => {
+                  setNewCategory({ name: c.name, budget: c.budget });
+                  setEditCatIndex(i);
+                },
+                className: "text-blue-600 mr-2"
+              }, "Edit"),
+              React.createElement("button", {
+                onClick: () => setCategories(categories.filter((_, idx) => idx !== i)),
+                className: "text-red-600"
+              }, "Delete")
+            )
+          )
+        )
+      ),
+
+      // CARDS
+      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+        React.createElement("h2", { className: "font-bold mb-2" }, "Cards"),
+
+        React.createElement("input", { className: "border p-2 mr-2", placeholder: "Card Name", value: newCard, onChange: e => setNewCard(e.target.value) }),
+
+        React.createElement("button", { onClick: addCard, className: "bg-blue-600 text-white px-3 py-1 rounded" }, editCardIndex !== null ? "Update" : "Add"),
+
+        cards.map((c, i) =>
+          React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
+            React.createElement("span", null, c),
+            React.createElement("div", null,
+              React.createElement("button", {
+                onClick: () => {
+                  setNewCard(c);
+                  setEditCardIndex(i);
+                },
+                className: "text-blue-600 mr-2"
+              }, "Edit"),
+              React.createElement("button", {
+                onClick: () => setCards(cards.filter((_, idx) => idx !== i)),
+                className: "text-red-600"
+              }, "Delete")
+            )
+          )
+        )
+      )
+    );
   };
 
   const addCard = () => {
@@ -705,6 +797,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

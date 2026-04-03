@@ -14,7 +14,7 @@
     <div id="root"></div>
 
  <script>
-   // UI + SETUP + AUTO CATEGORY
+// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -22,6 +22,7 @@ function ExpenseTracker() {
   const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
   const [categories, setCategories] = useState(() => JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
   const [preview, setPreview] = useState([]);
+  const [editIndex, setEditIndex] = useState(null);
 
   const [form, setForm] = useState({ date: "", store: "", amount: "", category: "" });
   const [newCategory, setNewCategory] = useState("");
@@ -34,11 +35,10 @@ function ExpenseTracker() {
     localStorage.setItem("expenseCategories", JSON.stringify(categories));
   }, [categories]);
 
-  // 🔥 AUTO CATEGORY RULES
   const getCategory = (store) => {
     const s = store.toLowerCase();
     if (s.includes("fred meyer") || s.includes("safeway") || s.includes("costco")) return "Groceries";
-    if (s.includes("shell") || s.includes("chevron") || s.includes("fuel")) return "Fuel";
+    if (s.includes("shell") || s.includes("chevron")) return "Fuel";
     if (s.includes("amazon") || s.includes("target")) return "Shopping";
     return "";
   };
@@ -48,13 +48,20 @@ function ExpenseTracker() {
 
     const autoCat = form.category || getCategory(form.store);
 
-    setExpenses([...expenses, { ...form, category: autoCat, amount: parseFloat(form.amount) }]);
+    if (editIndex !== null) {
+      const updated = [...expenses];
+      updated[editIndex] = { ...form, category: autoCat, amount: parseFloat(form.amount) };
+      setExpenses(updated);
+      setEditIndex(null);
+    } else {
+      setExpenses([...expenses, { ...form, category: autoCat, amount: parseFloat(form.amount) }]);
+    }
+
     setForm({ date: "", store: "", amount: "", category: "" });
   };
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // 🔥 CATEGORY TOTALS
   const categoryTotals = expenses.reduce((acc, e) => {
     const cat = e.category || "Uncategorized";
     acc[cat] = (acc[cat] || 0) + e.amount;
@@ -66,12 +73,10 @@ function ExpenseTracker() {
     React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
   );
 
-  // ================= SETUP =================
   if (view === "setup") {
     return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
-
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
         React.createElement("div", { className: "font-bold mb-2" }, "Categories"),
 
         React.createElement("input", {
@@ -105,27 +110,33 @@ function ExpenseTracker() {
     );
   }
 
-  // ================= DASHBOARD =================
   return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
     nav,
 
+    // TOTAL
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "text-lg font-bold" }, "Monthly Total"),
       React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
     ),
 
-    // CATEGORY TOTALS DISPLAY
+    // CATEGORY TOTALS + BAR GRAPH
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
       React.createElement("div", { className: "font-bold mb-2" }, "Category Totals"),
 
-      Object.keys(categoryTotals).length === 0
-        ? React.createElement("div", { className: "text-gray-500" }, "No data yet")
-        : Object.entries(categoryTotals).map(([cat, amt], i) =>
-            React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
-              React.createElement("span", null, cat),
-              React.createElement("span", { className: "font-semibold" }, `$${amt.toFixed(2)}`)
-            )
+      Object.entries(categoryTotals).map(([cat, amt], i) =>
+        React.createElement("div", { key: i, className: "mb-2" },
+          React.createElement("div", { className: "flex justify-between text-sm" },
+            React.createElement("span", null, cat),
+            React.createElement("span", null, `$${amt.toFixed(2)}`)
+          ),
+          React.createElement("div", { className: "w-full bg-gray-200 h-3 rounded" },
+            React.createElement("div", {
+              className: "bg-blue-500 h-3 rounded",
+              style: { width: `${(amt / total) * 100}%` }
+            })
           )
+        )
+      )
     ),
 
     // CSV IMPORT
@@ -160,13 +171,6 @@ function ExpenseTracker() {
         }
       }),
 
-      preview.length > 0 && React.createElement("div", { className: "mt-3" },
-        React.createElement("div", { className: "font-semibold" }, "Preview"),
-        preview.slice(0,5).map((p,i)=>
-          React.createElement("div", { key:i, className: "text-sm" }, `${p.store} → ${p.category || "Uncategorized"}`)
-        )
-      ),
-
       React.createElement("button", {
         className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
         onClick: () => {
@@ -184,7 +188,7 @@ function ExpenseTracker() {
 
     // FORM
     React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "font-bold mb-2" }, "Add Expense"),
+      React.createElement("div", { className: "font-bold mb-2" }, editIndex !== null ? "Edit Expense" : "Add Expense"),
 
       React.createElement("input", { className: "border p-2 mr-2", type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }) }),
       React.createElement("input", { className: "border p-2 mr-2", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }) }),
@@ -202,10 +206,10 @@ function ExpenseTracker() {
         })
       ),
 
-      React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, "Add")
+      React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, editIndex !== null ? "Update" : "Add")
     ),
 
-    // LIST
+    // LIST WITH EDIT
     React.createElement("div", { className: "bg-white p-4 rounded shadow" },
       React.createElement("div", { className: "font-bold mb-2" }, "Expenses"),
 
@@ -215,7 +219,16 @@ function ExpenseTracker() {
             React.createElement("div", { className: "font-medium" }, e.store),
             React.createElement("div", { className: "text-xs text-gray-500" }, `${e.date} • ${e.category || "Uncategorized"}`)
           ),
-          React.createElement("div", { className: "font-bold" }, `$${e.amount}`)
+          React.createElement("div", { className: "flex items-center gap-2" },
+            React.createElement("span", { className: "font-bold" }, `$${e.amount}`),
+            React.createElement("button", {
+              className: "text-blue-600",
+              onClick: () => {
+                setForm(e);
+                setEditIndex(i);
+              }
+            }, "Edit")
+          )
         )
       )
     )

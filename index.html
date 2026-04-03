@@ -317,6 +317,30 @@ function ExpenseTracker() {
       React.createElement("button", { className: "bg-green-600 text-white px-3 py-2 rounded", onClick: handleSubmit }, editIndex !== null ? "Update" : "Add")
     ),
 
+    // EMAIL EXPORT
+    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "font-bold mb-2" }, "Email Report"),
+
+      React.createElement("button", {
+        className: "bg-purple-600 text-white px-4 py-2 rounded",
+        onClick: () => {
+          const subject = `Expense Report ${selectedMonth}`;
+
+          const bodyLines = filteredExpenses.map(e =>
+            `${e.date} | ${e.store} | $${e.amount} | ${e.category || ""}`
+          );
+
+          const totalLine = `
+Total: $${total.toFixed(2)}`;
+
+          const body = encodeURIComponent(bodyLines.join("
+") + totalLine);
+
+          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+        }
+      }, "Send Email")
+    ),
+
     // LIST
     React.createElement("div", { className: "bg-white p-4 rounded shadow" },
       React.createElement("div", { className: "font-bold mb-2" }, "Expenses"),

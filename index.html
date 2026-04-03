@@ -149,7 +149,7 @@ function ExpenseTracker() {
   React.createElement("button", { onClick: () => setView("print"), className: "bg-black text-white px-4 py-2 rounded shadow" }, "Print Report")
 );
 
-  // ===== SETUP (FULL RESTORE) =====
+  // ===== SETUP (CLEAN FIXED) =====
   const [newCategory, setNewCategory] = useState({ name: "", budget: "" });
   const [newCard, setNewCard] = useState("");
 
@@ -175,6 +175,18 @@ function ExpenseTracker() {
     setNewCategory({ name: "", budget: "" });
   };
 
+  const addCard = () => {
+    if (!newCard) return alert("Enter card name");
+
+    if (editCardIndex !== null) {
+      const updated = [...cards];
+      updated[editCardIndex] = newCard;
+      setCards(updated);
+      setEditCardIndex(null);
+    } else {
+      setCards([...cards, newCard]);
+    }
+
     setNewCard("");
   };
 
@@ -182,7 +194,6 @@ function ExpenseTracker() {
     return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
 
-      // ATM SETUP (NEW)
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
         React.createElement("h2", { className: "font-bold mb-2" }, "ATM / Cash Pool"),
         React.createElement("input", {
@@ -194,18 +205,13 @@ function ExpenseTracker() {
         })
       ),
 
-      // CATEGORIES
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
         React.createElement("h2", { className: "font-bold mb-2" }, "Categories"),
 
         React.createElement("input", { className: "border p-2 mr-2", placeholder: "Name", value: newCategory.name, onChange: e => setNewCategory({ ...newCategory, name: e.target.value }) }),
         React.createElement("input", { className: "border p-2 mr-2", type: "number", placeholder: "Budget", value: newCategory.budget, onChange: e => setNewCategory({ ...newCategory, budget: e.target.value }) }),
 
-      
-        
-      ),
-
-      React.createElement("button", { onClick: addCategory, className: "bg-blue-600 text-white px-3 py-1 rounded" }, editCatIndex !== null ? "Update" : "Add"),
+        React.createElement("button", { onClick: addCategory, className: "bg-blue-600 text-white px-3 py-1 rounded" }, editCatIndex !== null ? "Update" : "Add"),
 
         categories.map((c, i) =>
           React.createElement("div", { key: i, className: "flex justify-between border-b py-1" },
@@ -227,7 +233,6 @@ function ExpenseTracker() {
         )
       ),
 
-      // CARDS
       React.createElement("div", { className: "bg-white p-4 rounded shadow" },
         React.createElement("h2", { className: "font-bold mb-2" }, "Cards"),
 
@@ -649,6 +654,7 @@ window.onload = () => {
     );
   }
 };
+
 
     </script>
   </body>

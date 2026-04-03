@@ -39,6 +39,7 @@ function ExpenseTracker() {
   const keyStore = (s) => normalizeStore(s).toLowerCase();
 
   useEffect(() => {
+                    
     const savedExpenses = JSON.parse(localStorage.getItem("expenseAppData") || "[]");
     setExpenses(savedExpenses);
     setCategories(JSON.parse(localStorage.getItem("expenseCategories") || "[]"));

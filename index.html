@@ -13,8 +13,8 @@
   <body>
     <div id="root"></div>
 
-    <script>
-// CLEAN WORKING VERSION
+ <script>
+  // CLEAN WORKING VERSION
 const { useState, useEffect } = React;
 
 function ExpenseTracker() {
@@ -131,8 +131,23 @@ function ExpenseTracker() {
 }
 
 window.onload = () => {
-  ReactDOM.createRoot(document.getElementById("root")).render(
-    React.createElement(ExpenseTracker)
-  );
+  try {
+    const rootEl = document.getElementById("root");
+    if (!rootEl) {
+      console.error("Root element not found");
+      return;
+    }
+    if (!window.React || !window.ReactDOM) {
+      console.error("React or ReactDOM not loaded");
+      return;
+    }
+    const root = ReactDOM.createRoot(rootEl);
+    root.render(React.createElement(ExpenseTracker));
+  } catch (err) {
+    console.error("App crashed:", err);
+    const rootEl = document.getElementById("root");
+    if (rootEl) rootEl.innerText = "App failed to load. Check console.";
+  }
 };
 
+</script>

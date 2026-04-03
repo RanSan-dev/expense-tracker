@@ -333,8 +333,7 @@ function ExpenseTracker() {
           const totalLine = `
 Total: $${total.toFixed(2)}`;
 
-          const body = encodeURIComponent(bodyLines.join("
-") + totalLine);
+          const body = encodeURIComponent(bodyLines.join("") + totalLine);
 
           window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
         }

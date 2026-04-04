@@ -1,150 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+<head>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Expense Tracker</title>
-  </head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker</title>
+</head>
 
-  <body>
-    <div id="root"></div>
+<body>
+  <div id="root"></div>
 
   <script>
-// UI + SETUP + AUTO CATEGORY + EDIT + GRAPH + MONTHLY + ALERTS + STORE MEMORY + REPORTS
-const { useState, useEffect } = React;
+  const { useState, useEffect } = React;
 
-function ExpenseTracker() {
-  const [view, setView] = useState("dashboard");
-  const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
-  const [categories, setCategories] = useState(() => JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
-  const [preview, setPreview] = useState([]);
-  const [editIndex, setEditIndex] = useState(null);
+  function ExpenseTracker() {
+    const [view, setView] = useState("dashboard");
+    const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
+    const [budgetMap, setBudgetMap] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
+    const [storeList, setStoreList] = useState(() => JSON.parse(localStorage.getItem("expenseStores") || "[]"));
 
-  const [form, setForm] = useState({ date: "", store: "", amount: "", category: "" });
-  const [newCategory, setNewCategory] = useState("");
-  const [budgetMap, setBudgetMap] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
+    const [form, setForm] = useState({ date: "", store: "", amount: "" });
 
-  const [storeList, setStoreList] = useState(() => JSON.parse(localStorage.getItem("expenseStores") || "[]"));
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+    });
 
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-  });
+    useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
+    useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
 
-  useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
-  useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
-  useEffect(() => localStorage.setItem("expenseBudgets", JSON.stringify(budgetMap)), [budgetMap]);
-  useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
+    const rememberStore = (store) => {
+      const s = store.trim();
+      if (!s) return;
+      setStoreList(prev => prev.some(x => x.toLowerCase() === s.toLowerCase()) ? prev : [...prev, s]);
+    };
 
-  const getCategory = (store) => {
-    const s = store.toLowerCase();
-    if (s.includes("fred meyer") || s.includes("safeway") || s.includes("costco")) return "Groceries";
-    if (s.includes("shell") || s.includes("chevron")) return "Fuel";
-    if (s.includes("amazon") || s.includes("target")) return "Shopping";
-    return "";
-  };
+    const handleSubmit = () => {
+      if (!form.date || !form.store || !form.amount) return;
+      rememberStore(form.store);
+      setExpenses([...expenses, { ...form, amount: parseFloat(form.amount) }]);
+      setForm({ date: "", store: "", amount: "" });
+    };
 
-  const rememberStore = (store) => {
-    const s = store.trim();
-    if (!s) return;
-    setStoreList(prev => prev.some(x => x.toLowerCase() === s.toLowerCase()) ? prev : [...prev, s]);
-  };
+    const filteredExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedMonth));
+    const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const handleSubmit = () => {
-    if (!form.date || !form.store || !form.amount) return;
-    const autoCat = form.category || getCategory(form.store);
-    rememberStore(form.store);
-    if (editIndex !== null) {
-      const updated = [...expenses];
-      updated[editIndex] = { ...form, category: autoCat, amount: parseFloat(form.amount) };
-      setExpenses(updated);
-      setEditIndex(null);
-    } else {
-      setExpenses([...expenses, { ...form, category: autoCat, amount: parseFloat(form.amount) }]);
-    }
-    setForm({ date: "", store: "", amount: "", category: "" });
-  };
+    const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
+      React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
+      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports")
+    );
 
-  const filteredExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedMonth));
-  const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+    if (view === "reports") {
+      return React.createElement("div", { className: "p-6" },
+        nav,
+        React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+          React.createElement("div", { className: "font-bold" }, "Monthly Summary"),
+          React.createElement("div", null, `Total: $${total.toFixed(2)}`)
+        ),
 
-  const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
-    React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
-    React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports"),
-    React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
-  );
-
-  // REPORTS
-  if (view === "reports") {
-    const daysInMonth = new Date(selectedMonth.split("-")[0], selectedMonth.split("-")[1], 0).getDate();
-    const today = new Date().getDate();
-    const expectedDaily = Object.values(budgetMap).reduce((a,b)=>a+parseFloat(b||0),0) / (daysInMonth || 1);
-    const actualDaily = total / (today || 1);
-
-    return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-      nav,
-
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-        React.createElement("div", { className: "text-lg font-bold" }, "Daily Spend"),
-        React.createElement("div", null, `Expected: $${expectedDaily.toFixed(2)} / day`),
-        React.createElement("div", null, `Actual: $${actualDaily.toFixed(2)} / day`)
-      ),
-
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-        React.createElement("div", { className: "font-bold mb-2" }, "Email Report"),
         React.createElement("button", {
-          className: "bg-purple-600 text-white px-3 py-2 rounded mr-2",
+          className: "bg-red-600 text-white px-3 py-2 mt-4 rounded",
           onClick: () => {
             const subject = `Expense Report ${selectedMonth}`;
             const body = encodeURIComponent(
-              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\\n") +
-              `\\nTotal: $${total.toFixed(2)}`
-            );
-            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
-          }
-        }, "Email"),
-        React.createElement("button", {
-          className: "bg-red-600 text-white px-3 py-2 rounded",
-          onClick: () => {
-            const subject = `Expense Report ${selectedMonth}`;
-            const body = encodeURIComponent(
-              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\\n") +
-              `\\nTotal: $${total.toFixed(2)}`
+              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\n") +
+              `\nTotal: $${total.toFixed(2)}`
             );
             window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
           }
-        }, "Gmail")
+        }, "Send Gmail Report")
+      );
+    }
+
+    return React.createElement("div", { className: "p-6" },
+      nav,
+
+      React.createElement("input", {
+        type: "month",
+        value: selectedMonth,
+        onChange: e => setSelectedMonth(e.target.value),
+        className: "border p-2 mb-4"
+      }),
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold" }, "Total"),
+        React.createElement("div", null, `$${total.toFixed(2)}`)
+      ),
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
+        React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, "Add")
+      ),
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+        filteredExpenses.map((e,i)=>
+          React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, e.store),
+            React.createElement("span", null, `$${e.amount}`)
+          )
+        )
       )
     );
   }
 
-  // DASHBOARD (fallback so app always returns)
-  return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-    nav,
-
-    React.createElement("div", { className: "mb-4" },
-      React.createElement("input", {
-        type: "month",
-        className: "border p-2",
-        value: selectedMonth,
-        onChange: e => setSelectedMonth(e.target.value)
-      })
-    ),
-
-    React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-      React.createElement("div", { className: "text-lg font-bold" }, "Monthly Total"),
-      React.createElement("div", { className: "text-2xl text-green-600" }, `$${total.toFixed(2)}`)
-    )
-  );
-}
-
-window.onload = () => {
-  const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(React.createElement(ExpenseTracker));
-};
-
+  window.onload = () => {
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(React.createElement(ExpenseTracker));
+  };
   </script>
+</body>
+</html>

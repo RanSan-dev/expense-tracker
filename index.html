@@ -133,19 +133,62 @@
             );
           })
         ),
+        React.createElement("div", { className:"flex gap-3" },
         React.createElement("button", {
           className: "bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-2xl shadow",
           onClick: () => {
+            const reportHtml = `
+              <h2>📊 Monthly Expense Report (${selectedMonth})</h2>
+              <p><strong>Total Spent:</strong> $${total.toFixed(2)}</p>
+              <p><strong>Budget:</strong> $${totalBudget.toFixed(2)}</p>
+              <h3>📅 Daily Pace</h3>
+              <p>Expected: $${expectedDaily.toFixed(2)}<br/>Actual: $${actualDaily.toFixed(2)}</p>
+              <h3>📂 Category Breakdown</h3>
+              ${Object.entries(categoryTotals).map(([cat, amt]) =>
+                `<p><strong>${cat}</strong>: $${amt.toFixed(2)} / $${budgets[cat]||0}</p>`
+              ).join("")}
+              <br/><p style="color:gray">Sent from Expense Tracker</p>
+            `;
+
             const subject = `Expense Report ${selectedMonth}`;
-            const summary = Object.entries(categoryTotals)
-              .map(([cat, amt]) => `${cat}: $${amt.toFixed(2)} / $${(budgets[cat]||0)}`)
-              .join("\\n");
-            const body = encodeURIComponent(
-              `Monthly Report (${selectedMonth})\\n\\nTotal: $${total.toFixed(2)}\\nBudget: $${totalBudget.toFixed(2)}\\n\\n${summary}\\n\\nDaily: Expected $${expectedDaily.toFixed(2)} | Actual $${actualDaily.toFixed(2)}`
-            );
+            const body = encodeURIComponent(reportHtml);
+
             window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
           }
-        }, "Send Beautiful Report ✉️")
+        }, "Send Styled Report ✉️"),
+
+        React.createElement("button", {
+          className: "bg-blue-600 text-white px-6 py-3 rounded-2xl shadow",
+          onClick: () => {
+            const reportWindow = window.open("", "_blank");
+            reportWindow.document.write(`
+              <html>
+              <head>
+                <title>Expense Report</title>
+                <style>
+                  body { font-family: Arial; padding:20px; }
+                  h2 { color:#333; }
+                  .section { margin-bottom:20px; }
+                </style>
+              </head>
+              <body>
+                <h2>📊 Monthly Expense Report (${selectedMonth})</h2>
+                <div class="section"><strong>Total:</strong> $${total.toFixed(2)}</div>
+                <div class="section"><strong>Budget:</strong> $${totalBudget.toFixed(2)}</div>
+                <div class="section">
+                  <h3>Categories</h3>
+                  ${Object.entries(categoryTotals).map(([cat, amt]) =>
+                    `<div>${cat}: $${amt.toFixed(2)}</div>`
+                  ).join("")}
+                </div>
+              </body>
+              </html>
+            `);
+            reportWindow.document.close();
+            reportWindow.print();
+          }
+        }, "Download / Print PDF")
+      )
       );
     }
 

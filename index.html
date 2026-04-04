@@ -102,7 +102,7 @@
 
             const reader = new FileReader();
             reader.onload = (evt) => {
-              const rows = evt.target.result.split("").slice(1).filter(r => r.trim());
+              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
 
               const newItems = rows.map(r => {
                 const [date, store, amount] = r.split(",");
@@ -134,7 +134,7 @@
       ),
 
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-        React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),, value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
         React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
         React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
         React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),

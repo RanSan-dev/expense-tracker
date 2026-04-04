@@ -137,21 +137,28 @@
         React.createElement("button", {
           className: "bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-2xl shadow",
           onClick: () => {
-            const reportHtml = `
-              <h2>📊 Monthly Expense Report (${selectedMonth})</h2>
-              <p><strong>Total Spent:</strong> $${total.toFixed(2)}</p>
-              <p><strong>Budget:</strong> $${totalBudget.toFixed(2)}</p>
-              <h3>📅 Daily Pace</h3>
-              <p>Expected: $${expectedDaily.toFixed(2)}<br/>Actual: $${actualDaily.toFixed(2)}</p>
-              <h3>📂 Category Breakdown</h3>
-              ${Object.entries(categoryTotals).map(([cat, amt]) =>
-                `<p><strong>${cat}</strong>: $${amt.toFixed(2)} / $${budgets[cat]||0}</p>`
-              ).join("")}
-              <br/><p style="color:gray">Sent from Expense Tracker</p>
-            `;
-
             const subject = `Expense Report ${selectedMonth}`;
-            const body = encodeURIComponent(reportHtml);
+
+            const lines = [
+              `MONTHLY EXPENSE REPORT (${selectedMonth})`,
+              ``,
+              `Total Spent: $${total.toFixed(2)}`,
+              `Budget: $${totalBudget.toFixed(2)}`,
+              ``,
+              `DAILY PACE`,
+              `Expected: $${expectedDaily.toFixed(2)}`,
+              `Actual: $${actualDaily.toFixed(2)}`,
+              ``,
+              `CATEGORY BREAKDOWN`,
+              ...Object.entries(categoryTotals).map(([cat, amt]) =>
+                `${cat}: $${amt.toFixed(2)} / $${budgets[cat]||0}`
+              ),
+              ``,
+              `Sent from Expense Tracker`
+            ];
+
+            const body = encodeURIComponent(lines.join("
+"));
 
             window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
           }

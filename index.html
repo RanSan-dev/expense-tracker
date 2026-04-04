@@ -179,7 +179,7 @@
         ).map(([cat, amt], i) =>
           React.createElement("div", { key:i, className:"mb-2" },
             React.createElement("div", { className:"flex justify-between text-sm" },
-              React.createElement("span", null, store),
+              React.createElement("span", null, cat),
               React.createElement("span", null, `$${amt.toFixed(2)}`)
             ),
             React.createElement("div", { className:"w-full bg-gray-200 h-3 rounded" },

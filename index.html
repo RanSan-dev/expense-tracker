@@ -18,6 +18,9 @@
 
   function ExpenseTracker() {
     const [view, setView] = useState("dashboard");
+    const [newCategory, setNewCategory] = useState("");
+    const [categories, setCategories] = useState(() => JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
+    const [budgets, setBudgets] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
     const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
     const [storeList, setStoreList] = useState(() => JSON.parse(localStorage.getItem("expenseStores") || "[]"));
 
@@ -33,6 +36,8 @@
 
     useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
     useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
+    useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
+    useEffect(() => localStorage.setItem("expenseBudgets", JSON.stringify(budgets)), [budgets]);
 
     const rememberStore = (store) => {
       const s = store.trim();
@@ -79,7 +84,8 @@
           onClick: () => {
             const subject = `Expense Report ${selectedMonth}`;
             const body = encodeURIComponent(
-              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("") +
+              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("
+") +
               `
 Total: $${total.toFixed(2)}`
             );
@@ -91,13 +97,6 @@ Total: $${total.toFixed(2)}`
 
     // SETUP PAGE
     if (view === "setup") {
-      const [newCategory, setNewCategory] = useState("");
-      const [categories, setCategories] = useState(() => JSON.parse(localStorage.getItem("expenseCategories") || "[]"));
-      const [budgets, setBudgets] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
-
-      useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
-      useEffect(() => localStorage.setItem("expenseBudgets", JSON.stringify(budgets)), [budgets]);
-
       return React.createElement("div", { className: "p-6" },
         nav,
 

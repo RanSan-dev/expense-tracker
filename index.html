@@ -79,8 +79,7 @@
           onClick: () => {
             const subject = `Expense Report ${selectedMonth}`;
             const body = encodeURIComponent(
-              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("
-") +
+              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("") +
               `
 Total: $${total.toFixed(2)}`
             );

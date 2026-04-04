@@ -72,3 +72,168 @@
           React.createElement("div", { className: "font-bold" }, "Monthly Summary"),
           React.createElement("div", null, `Total: $${total.toFixed(2)}`)
         ),
+
+        React.createElement("button", {
+          className: "bg-red-600 text-white px-3 py-2 mt-4 rounded",
+          onClick: () => {
+            const subject = `Expense Report ${selectedMonth}`;
+            const body = encodeURIComponent(
+              filteredExpenses.map(e => `${e.date} | ${e.store} | $${e.amount}`).join("\n") +
+              `\nTotal: $${total.toFixed(2)}`
+            );
+            window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
+          }
+        }, "Send Gmail Report")
+      );
+    }
+
+    return React.createElement("div", { className: "p-6" },
+      nav,
+
+      React.createElement("input", {
+        type: "month",
+        value: selectedMonth,
+        onChange: e => setSelectedMonth(e.target.value),
+        className: "border p-2 mb-4"
+      }),
+
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold" }, "Total"),
+        React.createElement("div", null, `$${total.toFixed(2)}`)
+      ),
+
+      // CSV IMPORT WITH PREVIEW
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+
+        React.createElement("input", {
+          type: "file",
+          accept: ".csv",
+          onChange: (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+
+              const items = rows.map(r => {
+                const [date, store, amount] = r.split(",");
+                if (!date || !store || !amount) return null;
+
+                return {
+                  date: date.trim(),
+                  store: store.trim(),
+                  amount: Math.abs(parseFloat(amount))
+                };
+              }).filter(Boolean);
+
+              setPreview(items);
+            };
+
+            reader.readAsText(file);
+          }
+        }),
+
+        preview.length > 0 && React.createElement("div", { className: "mt-3" },
+          React.createElement("div", { className: "font-semibold" }, "Preview"),
+          preview.slice(0,5).map((p,i)=>
+            React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)
+          ),
+
+          React.createElement("button", {
+            className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
+            onClick: () => {
+              const existing = new Set(expenses.map(e => `${e.date}|${e.store.toLowerCase()}|${e.amount}`));
+
+              const filtered = preview.filter(i => {
+                const key = `${i.date}|${i.store.toLowerCase()}|${i.amount}`;
+                return !existing.has(key);
+              });
+
+              filtered.forEach(i => rememberStore(i.store));
+
+              setExpenses([...expenses, ...filtered]);
+              setPreview([]);
+            }
+          }, "Submit Import")
+        )
+      ),
+
+      // CATEGORY GRAPH
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Category"),
+
+        Object.entries(
+          filteredExpenses.reduce((acc, e) => {
+            let cat = "Other";
+            const s = (e.store || "").toLowerCase();
+
+            if (s.includes("fred") || s.includes("safeway") || s.includes("costco")) cat = "Groceries";
+            else if (s.includes("shell") || s.includes("chevron")) cat = "Fuel";
+            else if (s.includes("amazon") || s.includes("target")) cat = "Shopping";
+
+            acc[cat] = (acc[cat] || 0) + e.amount;
+            return acc;
+          }, {})
+        ).map(([cat, amt], i) =>
+          React.createElement("div", { key:i, className:"mb-2" },
+            React.createElement("div", { className:"flex justify-between text-sm" },
+              React.createElement("span", null, store),
+              React.createElement("span", null, `$${amt.toFixed(2)}`)
+            ),
+            React.createElement("div", { className:"w-full bg-gray-200 h-3 rounded" },
+              React.createElement("div", {
+                className:"bg-blue-500 h-3 rounded",
+                style:{ width: `${total ? (amt/total)*100 : 0}%` }
+              })
+            )
+          )
+        )
+      ),
+
+      // FORM
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
+        React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("input", { placeholder: "Category (optional)", value: form.category, onChange: e => setForm({ ...form, category: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
+      ),
+
+      // LIST WITH EDIT/DELETE
+      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+        filteredExpenses.map((e,i)=>
+          React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, `${e.store} - $${e.amount} ${e.category ? '('+e.category+')' : ''}`),
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", {
+                className:"text-blue-600",
+                onClick:()=>{
+                  setForm(e);
+                  setEditIndex(i);
+                }
+              }, "Edit"),
+              React.createElement("button", {
+                className:"text-red-600",
+                onClick:()=>{
+                  if(confirm("Delete?")){
+                    setExpenses(expenses.filter((_,idx)=>idx!==i));
+                  }
+                }
+              }, "Delete")
+            )
+          )
+        )
+      )
+    );
+  }
+
+  window.onload = () => {
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(React.createElement(ExpenseTracker));
+  };
+  </script>
+</body>
+</html>

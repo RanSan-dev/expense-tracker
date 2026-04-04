@@ -301,6 +301,44 @@
         })
       ),
 
+      // SMART ALERTS + FORECAST
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Smart Insights"),
+
+        (() => {
+          const days = new Date(selectedMonth.split("-")[0], selectedMonth.split("-")[1], 0).getDate();
+          const today = new Date().getDate();
+          const actualDaily = total / (today || 1);
+          const projected = actualDaily * days;
+
+          const alerts = [];
+
+          categories.forEach(cat => {
+            const spent = filteredExpenses
+              .filter(e => (e.category || "Uncategorized") === cat)
+              .reduce((sum, e) => sum + e.amount, 0);
+
+            const budget = parseFloat(budgets[cat] || 0);
+            if (!budget) return;
+
+            const percent = (spent / budget) * 100;
+
+            if (percent >= 100) {
+              alerts.push(`🔴 ${cat} is OVER budget`);
+            } else if (percent >= 80) {
+              alerts.push(`🟠 ${cat} is at ${percent.toFixed(0)}% of budget`);
+            }
+          });
+
+          return React.createElement("div", null,
+            React.createElement("div", { className:"mb-2" }, `Projected total: $${projected.toFixed(2)}`),
+            alerts.length === 0
+              ? React.createElement("div", { className:"text-green-600" }, "All categories look good 👍")
+              : alerts.map((a,i)=>React.createElement("div", { key:i, className:"text-sm" }, a))
+          );
+        })()
+      ),
+
       // FORM
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
         React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),

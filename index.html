@@ -170,7 +170,36 @@
               `Sent from Expense Tracker`
             ];
 
-            const body = encodeURIComponent(lines.join(""));
+            // Ensure proper newlines and alignment
+            const pad = (s, n) => (s + ' '.repeat(n)).slice(0, n);
+            const prettyLines = [
+              "==============================",
+              `MONTHLY EXPENSE REPORT (${selectedMonth})`,
+              "==============================",
+              "",
+              `TOTAL:   $${total.toFixed(2)}`,
+              `BUDGET:  $${totalBudget.toFixed(2)}`,
+              "",
+              "------ DAILY PACE ------",
+              `Expected: $${expectedDaily.toFixed(2)}`,
+              `Actual:   $${actualDaily.toFixed(2)}`,
+              "",
+              "------ CATEGORY BREAKDOWN ------",
+              ...Object.entries(categoryTotals).map(([cat, amt]) => {
+                const budget = parseFloat(budgets[cat] || 0);
+                const pct = budget ? (amt / budget) * 100 : 0;
+                const totalBars = 20;
+                const filled = Math.round((Math.min(pct,100)/100)*totalBars);
+                const bar = `[${"█".repeat(filled)}${"░".repeat(totalBars-filled)}] ${pct.toFixed(0)}%`;
+                return `${pad(cat,14)} $${amt.toFixed(2)} / $${(budget||0)}  ${bar}`;
+              }),
+              "",
+              "------------------------------",
+              "Sent from Expense Tracker"
+            ];
+
+            const body = encodeURIComponent(prettyLines.join("
+"));
 
             window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
           }

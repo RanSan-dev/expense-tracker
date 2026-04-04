@@ -19,10 +19,12 @@
   function ExpenseTracker() {
     const [view, setView] = useState("dashboard");
     const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem("expenseAppData") || "[]"));
-    const [budgetMap, setBudgetMap] = useState(() => JSON.parse(localStorage.getItem("expenseBudgets") || "{}"));
     const [storeList, setStoreList] = useState(() => JSON.parse(localStorage.getItem("expenseStores") || "[]"));
 
     const [form, setForm] = useState({ date: "", store: "", amount: "" });
+    const [editIndex, setEditIndex] = useState(null);
+
+    const [preview, setPreview] = useState([]);
 
     const [selectedMonth, setSelectedMonth] = useState(() => {
       const now = new Date();
@@ -40,8 +42,18 @@
 
     const handleSubmit = () => {
       if (!form.date || !form.store || !form.amount) return;
+
       rememberStore(form.store);
-      setExpenses([...expenses, { ...form, amount: parseFloat(form.amount) }]);
+
+      if (editIndex !== null) {
+        const updated = [...expenses];
+        updated[editIndex] = { ...form, amount: parseFloat(form.amount) };
+        setExpenses(updated);
+        setEditIndex(null);
+      } else {
+        setExpenses([...expenses, { ...form, amount: parseFloat(form.amount) }]);
+      }
+
       setForm({ date: "", store: "", amount: "" });
     };
 
@@ -90,9 +102,10 @@
         React.createElement("div", null, `$${total.toFixed(2)}`)
       ),
 
-      // CSV IMPORT
+      // CSV IMPORT WITH PREVIEW
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
         React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+
         React.createElement("input", {
           type: "file",
           accept: ".csv",
@@ -104,48 +117,80 @@
             reader.onload = (evt) => {
               const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
 
-              const newItems = rows.map(r => {
+              const items = rows.map(r => {
                 const [date, store, amount] = r.split(",");
                 if (!date || !store || !amount) return null;
 
-                const cleanStore = store.trim();
-                rememberStore(cleanStore);
-
                 return {
                   date: date.trim(),
-                  store: cleanStore,
+                  store: store.trim(),
                   amount: Math.abs(parseFloat(amount))
                 };
               }).filter(Boolean);
 
-              const existing = new Set(expenses.map(e => `${e.date.trim()}|${e.store.trim().toLowerCase()}|${e.amount}`));
-
-              const filtered = newItems.filter(i => {
-                const key = `${i.date.trim()}|${i.store.trim().toLowerCase()}|${i.amount}`;
-                return !existing.has(key);
-              });
-
-              setExpenses([...expenses, ...filtered]);
+              setPreview(items);
             };
 
             reader.readAsText(file);
           }
-        })
+        }),
+
+        preview.length > 0 && React.createElement("div", { className: "mt-3" },
+          React.createElement("div", { className: "font-semibold" }, "Preview"),
+          preview.slice(0,5).map((p,i)=>
+            React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)
+          )
+        ),
+
+        preview.length > 0 && React.createElement("button", {
+          className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
+          onClick: () => {
+            const existing = new Set(expenses.map(e => `${e.date}|${e.store.toLowerCase()}|${e.amount}`));
+
+            const filtered = preview.filter(i => {
+              const key = `${i.date}|${i.store.toLowerCase()}|${i.amount}`;
+              return !existing.has(key);
+            });
+
+            filtered.forEach(i => rememberStore(i.store));
+
+            setExpenses([...expenses, ...filtered]);
+            setPreview([]);
+          }
+        }, "Import Data")
       ),
 
+      // FORM
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
         React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
         React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
         React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
         React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
-        React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, "Add")
+        React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
       ),
 
+      // LIST WITH EDIT/DELETE
       React.createElement("div", { className: "bg-white p-4 rounded shadow" },
         filteredExpenses.map((e,i)=>
           React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
-            React.createElement("span", null, e.store),
-            React.createElement("span", null, `$${e.amount}`)
+            React.createElement("span", null, `${e.store} - $${e.amount}`),
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", {
+                className:"text-blue-600",
+                onClick:()=>{
+                  setForm(e);
+                  setEditIndex(i);
+                }
+              }, "Edit"),
+              React.createElement("button", {
+                className:"text-red-600",
+                onClick:()=>{
+                  if(confirm("Delete?")){
+                    setExpenses(expenses.filter((_,idx)=>idx!==i));
+                  }
+                }
+              }, "Delete")
+            )
           )
         )
       )

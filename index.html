@@ -115,7 +115,8 @@
 
             const reader = new FileReader();
             reader.onload = (evt) => {
-              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+              const rows = evt.target.result.split("
+").slice(1).filter(r => r.trim());
 
               const items = rows.map(r => {
                 const [date, store, amount] = r.split(",");
@@ -139,25 +140,50 @@
           React.createElement("div", { className: "font-semibold" }, "Preview"),
           preview.slice(0,5).map((p,i)=>
             React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)
+          ),
+
+          React.createElement("button", {
+            className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
+            onClick: () => {
+              const existing = new Set(expenses.map(e => `${e.date}|${e.store.toLowerCase()}|${e.amount}`));
+
+              const filtered = preview.filter(i => {
+                const key = `${i.date}|${i.store.toLowerCase()}|${i.amount}`;
+                return !existing.has(key);
+              });
+
+              filtered.forEach(i => rememberStore(i.store));
+
+              setExpenses([...expenses, ...filtered]);
+              setPreview([]);
+            }
+          }, "Submit Import")
+        )
+      ),
+
+      // CATEGORY GRAPH
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Store"),
+
+        Object.entries(
+          filteredExpenses.reduce((acc, e) => {
+            acc[e.store] = (acc[e.store] || 0) + e.amount;
+            return acc;
+          }, {})
+        ).map(([store, amt], i) =>
+          React.createElement("div", { key:i, className:"mb-2" },
+            React.createElement("div", { className:"flex justify-between text-sm" },
+              React.createElement("span", null, store),
+              React.createElement("span", null, `$${amt.toFixed(2)}`)
+            ),
+            React.createElement("div", { className:"w-full bg-gray-200 h-3 rounded" },
+              React.createElement("div", {
+                className:"bg-blue-500 h-3 rounded",
+                style:{ width: `${total ? (amt/total)*100 : 0}%` }
+              })
+            )
           )
-        ),
-
-        preview.length > 0 && React.createElement("button", {
-          className: "mt-3 bg-blue-600 text-white px-4 py-2 rounded",
-          onClick: () => {
-            const existing = new Set(expenses.map(e => `${e.date}|${e.store.toLowerCase()}|${e.amount}`));
-
-            const filtered = preview.filter(i => {
-              const key = `${i.date}|${i.store.toLowerCase()}|${i.amount}`;
-              return !existing.has(key);
-            });
-
-            filtered.forEach(i => rememberStore(i.store));
-
-            setExpenses([...expenses, ...filtered]);
-            setPreview([]);
-          }
-        }, "Import Data")
+        )
       ),
 
       // FORM

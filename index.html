@@ -198,6 +198,8 @@
     // DASHBOARD
     return React.createElement("div", { className: "p-6" },
       nav,
+
+      // Month
       React.createElement("input", {
         type: "month",
         value: selectedMonth,
@@ -205,9 +207,109 @@
         className: "border p-2 mb-4"
       }),
 
+      // Total
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
         React.createElement("div", { className: "font-bold" }, "Total"),
         React.createElement("div", null, `$${total.toFixed(2)}`)
+      ),
+
+      // CSV IMPORT
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+        React.createElement("input", {
+          type: "file",
+          accept: ".csv",
+          onChange: (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+              const items = rows.map(r => {
+                const [date, store, amount] = r.split(",");
+                if (!date || !store || !amount) return null;
+                return { date: date.trim(), store: store.trim(), amount: Math.abs(parseFloat(amount)), category: "" };
+              }).filter(Boolean);
+              setPreview(items);
+            };
+            reader.readAsText(file);
+          }
+        }),
+
+        preview.length > 0 && React.createElement("div", { className: "mt-3" },
+          preview.slice(0,5).map((p,i)=>React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)),
+          React.createElement("button", {
+            className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
+            onClick: () => {
+              setExpenses([...expenses, ...preview]);
+              preview.forEach(p => rememberStore(p.store));
+              setPreview([]);
+            }
+          }, "Submit Import")
+        )
+      ),
+
+      // CATEGORY GRAPH
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Category"),
+        Object.entries(
+          filteredExpenses.reduce((acc, e) => {
+            const cat = e.category || "Uncategorized";
+            acc[cat] = (acc[cat] || 0) + e.amount;
+            return acc;
+          }, {})
+        ).map(([cat, amt], i) =>
+          React.createElement("div", { key:i, className:"mb-2" },
+            React.createElement("div", { className:"flex justify-between text-sm" },
+              React.createElement("span", null, cat),
+              React.createElement("span", null, `$${amt.toFixed(2)}`)
+            ),
+            React.createElement("div", { className:"w-full bg-gray-200 h-2 rounded" },
+              React.createElement("div", {
+                className:"bg-blue-500 h-2 rounded",
+                style:{ width: `${total ? (amt/total)*100 : 0}%` }
+              })
+            )
+          )
+        )
+      ),
+
+      // FORM
+      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+        React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
+        React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
+        React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
+
+        React.createElement("select", {
+          value: form.category,
+          onChange: e => setForm({ ...form, category: e.target.value }),
+          className: "border p-2 mr-2"
+        },
+          React.createElement("option", { value: "" }, "Category"),
+          categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+        ),
+
+        React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
+      ),
+
+      // LIST
+      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+        filteredExpenses.map((e,i)=>
+          React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, `${e.store} - $${e.amount} ${e.category ? '('+e.category+')' : ''}`),
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", {
+                className:"text-blue-600",
+                onClick:()=>{ setForm(e); setEditIndex(i); }
+              }, "Edit"),
+              React.createElement("button", {
+                className:"text-red-600",
+                onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==i)); }
+              }, "Delete")
+            )
+          )
+        )
       )
     );
   }

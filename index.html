@@ -115,7 +115,7 @@
 
             const reader = new FileReader();
             reader.onload = (evt) => {
-              const rows = evt.target.result.split("").slice(1).filter(r => r.trim());
+              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
 
               const items = rows.map(r => {
                 const [date, store, amount] = r.split(",");
@@ -162,11 +162,11 @@
 
       // CATEGORY GRAPH
       React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Store"),
+        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Category"),
 
         Object.entries(
           filteredExpenses.reduce((acc, e) => {
-            acc[e.store] = (acc[e.store] || 0) + e.amount;
+            const getCategory = (store) => { const s = store.toLowerCase(); if (s.includes("fred") || s.includes("safeway") || s.includes("costco")) return "Groceries"; if (s.includes("shell") || s.includes("chevron")) return "Fuel"; if (s.includes("amazon") || s.includes("target")) return "Shopping"; return "Other"; }; const cat = getCategory(e.store); acc[cat] = (acc[cat] || 0) + e.amount;
             return acc;
           }, {})
         ).map(([store, amt], i) =>

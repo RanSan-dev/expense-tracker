@@ -46,8 +46,18 @@
     const [bankForm, setBankForm] = useState({ name:"", amount:"", day:"" });
     const [bankEditIndex, setBankEditIndex] = useState(null);
 
+    // INCOME SOURCES
+    const [ccIncome, setCcIncome] = useState(() => JSON.parse(localStorage.getItem("ccIncome")||"[]"));
+    const [bankIncome, setBankIncome] = useState(() => JSON.parse(localStorage.getItem("bankIncome")||"[]"));
+    const [ccIncomeForm, setCcIncomeForm] = useState({ name:"", amount:"", day:"" });
+    const [ccIncomeEditIndex, setCcIncomeEditIndex] = useState(null);
+    const [bankIncomeForm, setBankIncomeForm] = useState({ name:"", amount:"", day:"" });
+    const [bankIncomeEditIndex, setBankIncomeEditIndex] = useState(null);
+
     useEffect(()=>localStorage.setItem("ccDebits", JSON.stringify(ccDebits)), [ccDebits]);
     useEffect(()=>localStorage.setItem("bankDebits", JSON.stringify(bankDebits)), [bankDebits]);
+    useEffect(()=>localStorage.setItem("ccIncome", JSON.stringify(ccIncome)), [ccIncome]);
+    useEffect(()=>localStorage.setItem("bankIncome", JSON.stringify(bankIncome)), [bankIncome]);
 
     useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
     useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
@@ -84,7 +94,8 @@
       React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
       React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports"),
       React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup"),
-      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("autodebits") }, "Auto Debits")
+      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("autodebits") }, "Auto Debits"),
+      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("income") }, "Income")
     );
 
     if (view === "reports") {
@@ -338,6 +349,80 @@
             React.createElement("div", { className:"flex gap-2" },
               React.createElement("button", { className:"text-blue-600", onClick:()=>{ setBankForm(d); setBankEditIndex(i); } }, "Edit"),
               React.createElement("button", { className:"text-red-600", onClick:()=>setBankDebits(bankDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+            )
+          ))
+        )
+      );
+    }
+
+    // INCOME PAGE
+    if (view === "income") {
+      const ccTotal = ccIncome.reduce((s,i)=>s+parseFloat(i.amount||0),0);
+      const bankTotal = bankIncome.reduce((s,i)=>s+parseFloat(i.amount||0),0);
+
+      return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+        nav,
+
+        // CREDIT CARD INCOME
+        React.createElement("div", { className:"bg-white p-4 rounded-2xl shadow mb-6" },
+          React.createElement("div", { className:"font-bold mb-2" }, "Credit Card Income"),
+          React.createElement("div", { className:"mb-2" }, `Total: $${ccTotal.toFixed(2)}`),
+
+          React.createElement("div", { className:"mb-3" },
+            React.createElement("input", { placeholder:"Name", value:ccIncomeForm.name, onChange:e=>setCcIncomeForm({...ccIncomeForm,name:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Amount", value:ccIncomeForm.amount, onChange:e=>setCcIncomeForm({...ccIncomeForm,amount:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Day", value:ccIncomeForm.day, onChange:e=>setCcIncomeForm({...ccIncomeForm,day:e.target.value}), className:"border p-2 mr-2 w-20" }),
+            React.createElement("button", { className:"bg-green-600 text-white px-3 py-2 rounded", onClick:()=>{
+              if(!ccIncomeForm.name||!ccIncomeForm.amount) return;
+              if(ccIncomeEditIndex !== null){
+                const updated=[...ccIncome];
+                updated[ccIncomeEditIndex]={...ccIncomeForm, amount:parseFloat(ccIncomeForm.amount)};
+                setCcIncome(updated);
+                setCcIncomeEditIndex(null);
+              } else {
+                setCcIncome([...ccIncome, {...ccIncomeForm, amount:parseFloat(ccIncomeForm.amount)}]);
+              }
+              setCcIncomeForm({name:"",amount:"",day:""});
+            }}, ccIncomeEditIndex !== null ? "Update" : "Add")
+          ),
+
+          ccIncome.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, `${d.name} - $${d.amount} (Day ${d.day||'-'})`),
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setCcIncomeForm(d); setCcIncomeEditIndex(i); } }, "Edit"),
+              React.createElement("button", { className:"text-red-600", onClick:()=>setCcIncome(ccIncome.filter((_,idx)=>idx!==i)) }, "Delete")
+            )
+          ))
+        ),
+
+        // BANK INCOME
+        React.createElement("div", { className:"bg-white p-4 rounded-2xl shadow" },
+          React.createElement("div", { className:"font-bold mb-2" }, "Bank Income"),
+          React.createElement("div", { className:"mb-2" }, `Total: $${bankTotal.toFixed(2)}`),
+
+          React.createElement("div", { className:"mb-3" },
+            React.createElement("input", { placeholder:"Name", value:bankIncomeForm.name, onChange:e=>setBankIncomeForm({...bankIncomeForm,name:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Amount", value:bankIncomeForm.amount, onChange:e=>setBankIncomeForm({...bankIncomeForm,amount:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Day", value:bankIncomeForm.day, onChange:e=>setBankIncomeForm({...bankIncomeForm,day:e.target.value}), className:"border p-2 mr-2 w-20" }),
+            React.createElement("button", { className:"bg-green-600 text-white px-3 py-2 rounded", onClick:()=>{
+              if(!bankIncomeForm.name||!bankIncomeForm.amount) return;
+              if(bankIncomeEditIndex !== null){
+                const updated=[...bankIncome];
+                updated[bankIncomeEditIndex]={...bankIncomeForm, amount:parseFloat(bankIncomeForm.amount)};
+                setBankIncome(updated);
+                setBankIncomeEditIndex(null);
+              } else {
+                setBankIncome([...bankIncome, {...bankIncomeForm, amount:parseFloat(bankIncomeForm.amount)}]);
+              }
+              setBankIncomeForm({name:"",amount:"",day:""});
+            }}, bankIncomeEditIndex !== null ? "Update" : "Add")
+          ),
+
+          bankIncome.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, `${d.name} - $${d.amount} (Day ${d.day||'-'})`),
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setBankIncomeForm(d); setBankIncomeEditIndex(i); } }, "Edit"),
+              React.createElement("button", { className:"text-red-600", onClick:()=>setBankIncome(bankIncome.filter((_,idx)=>idx!==i)) }, "Delete")
             )
           ))
         )

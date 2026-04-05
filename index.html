@@ -150,6 +150,53 @@
             );
           })
         ),
+        // VENDOR REPORT BUTTON
+        React.createElement("button", {
+          className:"bg-purple-600 text-white px-6 py-3 rounded-2xl shadow mb-4",
+          onClick:()=>{
+            const vendorTotals = filteredExpenses.reduce((acc,e)=>{
+              const key=(e.store||"Unknown").trim();
+              acc[key]=(acc[key]||0)+e.amount;
+              return acc;
+            },{});
+
+            const entries = Object.entries(vendorTotals).sort((a,b)=>b[1]-a[1]);
+
+            const detailRows = filteredExpenses.map(e=>
+              `<tr><td>${e.date}</td><td>${e.store}</td><td>$${e.amount.toFixed(2)}</td></tr>`
+            ).join("");
+
+            const vendorRows = entries.map(([v,a])=>
+              `<tr><td>${v}</td><td>$${a.toFixed(2)}</td></tr>`
+            ).join("");
+
+            const total = entries.reduce((s,[,a])=>s+a,0);
+
+            const html = `
+              <html>
+              <body style="font-family:Arial;padding:20px">
+                <h2>Vendor Report (${selectedMonth})</h2>
+                <h3>By Vendor</h3>
+                <table border="1" cellpadding="5" cellspacing="0">
+                  <tr><th>Vendor</th><th>Total</th></tr>
+                  ${vendorRows}
+                  <tr><td><b>TOTAL</b></td><td><b>$${total.toFixed(2)}</b></td></tr>
+                </table>
+
+                <h3 style="margin-top:20px">Line Items</h3>
+                <table border="1" cellpadding="5" cellspacing="0">
+                  <tr><th>Date</th><th>Vendor</th><th>Amount</th></tr>
+                  ${detailRows}
+                </table>
+              </body>
+              </html>`;
+
+            const w=window.open("","_blank");
+            w.document.write(html);
+            w.document.close();
+          }
+        },"Open Vendor Report"),
+
         React.createElement("div", { className:"flex gap-3" },
         React.createElement("button", {
           className: "bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-2xl shadow",
@@ -566,28 +613,7 @@
         })
       ),
 
-      // VENDOR TOTALS
-      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
-        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Vendor"),
-        (()=>{
-          const vendorTotals = filteredExpenses.reduce((acc,e)=>{
-            const key = (e.store||"Unknown").trim();
-            acc[key] = (acc[key]||0) + (parseFloat(e.amount)||0);
-            return acc;
-          },{});
-
-          const entries = Object.entries(vendorTotals)
-            .sort((a,b)=>b[1]-a[1]);
-
-          const grand = entries.reduce((s,[,amt])=>s+amt,0);
-
-          return React.createElement(React.Fragment, null,
-            entries.map(([vendor, amt], i)=>
-              React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
-                React.createElement("span", { className:"font-medium" }, vendor),
-                React.createElement("span", null, `$${amt.toFixed(2)}`)
-              )
-            ),
+      
             React.createElement("div", { className:"flex justify-between mt-3 pt-2 border-t font-bold" },
               React.createElement("span", null, "TOTAL"),
               React.createElement("span", null, `$${grand.toFixed(2)}`)

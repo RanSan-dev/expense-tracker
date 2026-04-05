@@ -325,7 +325,7 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
-              const rows = evt.target.result.split("").slice(1).filter(r => r.trim());
+              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
               const items = rows.map(r => {
                 const [date, store, amount] = r.split(",");
                 if (!date || !store || !amount) return null;

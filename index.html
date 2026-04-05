@@ -42,7 +42,9 @@
     const [ccDebits, setCcDebits] = useState(() => JSON.parse(localStorage.getItem("ccDebits")||"[]"));
     const [bankDebits, setBankDebits] = useState(() => JSON.parse(localStorage.getItem("bankDebits")||"[]"));
     const [ccForm, setCcForm] = useState({ name:"", amount:"", day:"" });
+    const [ccEditIndex, setCcEditIndex] = useState(null);
     const [bankForm, setBankForm] = useState({ name:"", amount:"", day:"" });
+    const [bankEditIndex, setBankEditIndex] = useState(null);
 
     useEffect(()=>localStorage.setItem("ccDebits", JSON.stringify(ccDebits)), [ccDebits]);
     useEffect(()=>localStorage.setItem("bankDebits", JSON.stringify(bankDebits)), [bankDebits]);
@@ -289,12 +291,16 @@
               if(!ccForm.name||!ccForm.amount) return;
               setCcDebits([...ccDebits, {...ccForm, amount:parseFloat(ccForm.amount)}]);
               setCcForm({name:"",amount:"",day:""});
-            }}, "Add")
+            }}, (typeof ccEditIndex !== 'undefined' && ccEditIndex !== null) || (typeof bankEditIndex !== 'undefined' && bankEditIndex !== null) ? "Update" : "Add")
           ),
 
           ccDebits.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
             React.createElement("span", null, `${d.name} - $${d.amount} (Day ${d.day||'-'})`),
-            React.createElement("button", { className:"text-red-600", onClick:()=>setCcDebits(ccDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setCcForm(d); setCcEditIndex(i); } }, "Edit"),
+              React.createElement("button", { className:"text-red-600", onClick:()=>setCcDebits(ccDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+            )
+          )) }, "Delete")
           ))
         ),
 
@@ -311,12 +317,16 @@
               if(!bankForm.name||!bankForm.amount) return;
               setBankDebits([...bankDebits, {...bankForm, amount:parseFloat(bankForm.amount)}]);
               setBankForm({name:"",amount:"",day:""});
-            }}, "Add")
+            }}, (typeof ccEditIndex !== 'undefined' && ccEditIndex !== null) || (typeof bankEditIndex !== 'undefined' && bankEditIndex !== null) ? "Update" : "Add")
           ),
 
           bankDebits.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
             React.createElement("span", null, `${d.name} - $${d.amount} (Day ${d.day||'-'})`),
-            React.createElement("button", { className:"text-red-600", onClick:()=>setBankDebits(bankDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+            React.createElement("div", { className:"flex gap-2" },
+              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setBankForm(d); setBankEditIndex(i); } }, "Edit"),
+              React.createElement("button", { className:"text-red-600", onClick:()=>setBankDebits(bankDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+            )
+          )) }, "Delete")
           ))
         )
       );

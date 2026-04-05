@@ -258,8 +258,19 @@
       );
     }
 
-    // DASHBOARD
-    return React.createElement("div", { className: "p-6" },
+    // DASHBOARD (ULTIMATE)
+    const todayStr = new Date().toISOString().slice(0,10);
+    const todayTotal = filteredExpenses.filter(e=>e.date===todayStr).reduce((s,e)=>s+e.amount,0);
+
+    const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {
+      const cat = e.category || "Uncategorized";
+      acc[cat] = (acc[cat] || 0) + e.amount;
+      return acc;
+    }, {});
+
+    const topCategory = Object.entries(categoryTotalsDash).sort((a,b)=>b[1]-a[1])[0];
+
+    return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
 
       // Month
@@ -270,8 +281,24 @@
         className: "border p-2 mb-4"
       }),
 
+      // TOP CARDS
+      React.createElement("div", { className: "grid grid-cols-3 gap-4 mb-6" },
+        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+          React.createElement("div", { className: "text-sm text-gray-500" }, "Total"),
+          React.createElement("div", { className: "text-2xl font-bold" }, `$${total.toFixed(2)}`)
+        ),
+        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+          React.createElement("div", { className: "text-sm text-gray-500" }, "Today"),
+          React.createElement("div", { className: "text-2xl font-bold text-green-600" }, `$${todayTotal.toFixed(2)}`)
+        ),
+        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+          React.createElement("div", { className: "text-sm text-gray-500" }, "Top Category"),
+          React.createElement("div", { className: "text-lg font-bold" }, topCategory ? `${topCategory[0]} ($${topCategory[1].toFixed(2)})` : "—")
+        )
+      ),
+
       // FORM (top)
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
         React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
         React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
         React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
@@ -287,14 +314,8 @@
         React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
       ),
 
-      // Total
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
-        React.createElement("div", { className: "font-bold" }, "Total"),
-        React.createElement("div", null, `$${total.toFixed(2)}`)
-      ),
-
       // CSV IMPORT
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
         React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
         React.createElement("input", {
           type: "file",
@@ -304,7 +325,8 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
-              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+              const rows = evt.target.result.split("
+").slice(1).filter(r => r.trim());
               const items = rows.map(r => {
                 const [date, store, amount] = r.split(",");
                 if (!date || !store || !amount) return null;
@@ -330,23 +352,17 @@
       ),
 
       // CATEGORY GRAPH
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
         React.createElement("div", { className: "font-bold mb-2" }, "Spending by Category"),
-        Object.entries(
-          filteredExpenses.reduce((acc, e) => {
-            const cat = e.category || "Uncategorized";
-            acc[cat] = (acc[cat] || 0) + e.amount;
-            return acc;
-          }, {})
-        ).map(([cat, amt], i) =>
+        Object.entries(categoryTotalsDash).map(([cat, amt], i) =>
           React.createElement("div", { key:i, className:"mb-2" },
             React.createElement("div", { className:"flex justify-between text-sm" },
               React.createElement("span", null, cat),
               React.createElement("span", null, `$${amt.toFixed(2)}`)
             ),
-            React.createElement("div", { className:"w-full bg-gray-200 h-2 rounded" },
+            React.createElement("div", { className:"w-full bg-gray-200 h-3 rounded" },
               React.createElement("div", {
-                className:"bg-blue-500 h-2 rounded",
+                className:"bg-blue-500 h-3 rounded",
                 style:{ width: `${total ? (amt/total)*100 : 0}%` }
               })
             )
@@ -355,16 +371,13 @@
       ),
 
       // SMART ALERTS
-      React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
         React.createElement("div", { className: "font-bold mb-2" }, "Alerts"),
         categories.map((cat,i)=>{
-          const spent = filteredExpenses
-            .filter(e => (e.category || "Uncategorized") === cat)
-            .reduce((sum,e)=>sum+e.amount,0);
+          const spent = (categoryTotalsDash[cat]||0);
           const budget = parseFloat(budgets[cat]||0);
           if(!budget) return null;
           const percent = (spent/budget)*100;
-
           if(percent>=100){
             return React.createElement("div",{key:i,className:"text-red-600 text-sm"},`🔴 ${cat} over budget`);
           }
@@ -376,19 +389,13 @@
       ),
 
       // LIST WITH DATES
-      React.createElement("div", { className: "bg-white p-4 rounded shadow" },
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
         filteredExpenses.map((e,i)=>
           React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
             React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount} ${e.category ? '('+e.category+')' : ''}`),
             React.createElement("div", { className:"flex gap-2" },
-              React.createElement("button", {
-                className:"text-blue-600",
-                onClick:()=>{ setForm(e); setEditIndex(i); }
-              }, "Edit"),
-              React.createElement("button", {
-                className:"text-red-600",
-                onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==i)); }
-              }, "Delete")
+              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(i); } }, "Edit"),
+              React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==i)); } }, "Delete")
             )
           )
         )

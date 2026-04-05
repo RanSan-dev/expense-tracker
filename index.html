@@ -478,11 +478,36 @@ Budget: $${totalBudget.toFixed(2)}`);
             const reader = new FileReader();
             reader.onload = (evt) => {
               const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
-              const items = rows.map(r => {
-                const [date, store, amount] = r.split(",");
-                if (!date || !store || !amount) return null;
-                return { date: date.trim(), store: store.trim(), amount: Math.abs(parseFloat(amount)), category: "" };
-              }).filter(Boolean);
+              const normalizeVendor = (name) => {
+  if (!name) return "";
+  let n = name.toUpperCase();
+
+  // remove numbers + junk
+  n = n.replace(/\d+/g, "");
+  n = n.replace(/[^A-Z ]/g, "");
+  n = n.replace(/\s+/g, " ").trim();
+
+  // smart grouping
+  if (n.includes("AMAZON") || n.includes("AMZN")) return "Amazon";
+  if (n.includes("WALMART")) return "Walmart";
+  if (n.includes("SAFEWAY")) return "Safeway";
+  if (n.includes("COSTCO")) return "Costco";
+  if (n.includes("SHELL")) return "Shell";
+
+  return n.charAt(0) + n.slice(1).toLowerCase();
+};
+
+const items = rows.map(r => {
+  const [date, store, amount] = r.split(",");
+  if (!date || !store || !amount) return null;
+
+  return {
+    date: date.trim(),
+    store: normalizeVendor(store),
+    amount: Math.abs(parseFloat(amount)),
+    category: ""
+  };
+}).filter(Boolean);
               setPreview(items);
             };
             reader.readAsText(file);

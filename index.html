@@ -532,8 +532,24 @@ Budget: $${totalBudget.toFixed(2)}`);
                   return name;
                 };
 
-                const [date, store, amount] = r.split(",");
-                if (!date || !store || !amount) return null;
+                const [rawDate, store, amount] = r.split(",");
+if (!rawDate || !store || !amount) return null;
+
+// FIX DATE FORMAT
+let date = rawDate.trim();
+if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(date)) {
+  const [mm, dd, yyyy] = date.split("/");
+  date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+}
+
+const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
+
+return {
+  date,
+  store: applyVendorRule(store.trim()),
+  amount: cleanAmount,
+  category: ""
+};
 
                 const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
 

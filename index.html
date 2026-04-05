@@ -32,6 +32,8 @@
     const [form, setForm] = useState({ date: "", store: "", amount: "", category: "" });
     const [editIndex, setEditIndex] = useState(null);
     const [preview, setPreview] = useState([]);
+    const [vendorRules, setVendorRules] = useState(() => JSON.parse(localStorage.getItem("vendorRules") || "[]"));
+    const [vendorRuleForm, setVendorRuleForm] = useState({ match:"", replace:"" });
 
     const [selectedMonth, setSelectedMonth] = useState(() => {
       const now = new Date();
@@ -52,6 +54,7 @@
     const [incomeEditIndex, setIncomeEditIndex] = useState(null);
 
     useEffect(()=>localStorage.setItem("incomeList", JSON.stringify(income)), [income]);
+    useEffect(()=>localStorage.setItem("vendorRules", JSON.stringify(vendorRules)), [vendorRules]);
 
     useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
     useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
@@ -251,6 +254,13 @@ Budget: $${totalBudget.toFixed(2)}`);
     }
 
     if (view === "setup") {
+      const applyVendorRule = (name) => {
+        const upper = name.toUpperCase();
+        for (let r of vendorRules) {
+          if (upper.includes(r.match.toUpperCase())) return r.replace;
+        }
+        return name;
+      };
       return React.createElement("div", { className: "p-6" },
         nav,
 
@@ -271,6 +281,41 @@ Budget: $${totalBudget.toFixed(2)}`);
               setNewCategory("");
             }
           }, "Add")
+        ),
+
+        React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+          React.createElement("div", { className: "font-bold mb-2" }, "Vendor Rules"),
+          React.createElement("div", { className:"mb-3" },
+            React.createElement("input", {
+              placeholder:"Match (e.g. AMZN)",
+              value: vendorRuleForm.match,
+              onChange: e=>setVendorRuleForm({...vendorRuleForm, match:e.target.value}),
+              className:"border p-2 mr-2"
+            }),
+            React.createElement("input", {
+              placeholder:"Replace with (e.g. Amazon)",
+              value: vendorRuleForm.replace,
+              onChange: e=>setVendorRuleForm({...vendorRuleForm, replace:e.target.value}),
+              className:"border p-2 mr-2"
+            }),
+            React.createElement("button", {
+              className:"bg-purple-600 text-white px-3 py-2 rounded",
+              onClick:()=>{
+                if(!vendorRuleForm.match || !vendorRuleForm.replace) return;
+                setVendorRules([...vendorRules, vendorRuleForm]);
+                setVendorRuleForm({match:"", replace:""});
+              }
+            },"Add Rule")
+          ),
+          vendorRules.map((r,i)=>
+            React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+              React.createElement("span", null, `${r.match} → ${r.replace}`),
+              React.createElement("button", {
+                className:"text-red-600",
+                onClick:()=>setVendorRules(vendorRules.filter((_,idx)=>idx!==i))
+              },"Delete")
+            )
+          )
         ),
 
         React.createElement("div", { className: "bg-white p-4 rounded shadow" },
@@ -478,36 +523,18 @@ Budget: $${totalBudget.toFixed(2)}`);
             const reader = new FileReader();
             reader.onload = (evt) => {
               const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
-              const normalizeVendor = (name) => {
-  if (!name) return "";
-  let n = name.toUpperCase();
-
-  // remove numbers + junk
-  n = n.replace(/\d+/g, "");
-  n = n.replace(/[^A-Z ]/g, "");
-  n = n.replace(/\s+/g, " ").trim();
-
-  // smart grouping
-  if (n.includes("AMAZON") || n.includes("AMZN")) return "Amazon";
-  if (n.includes("WALMART")) return "Walmart";
-  if (n.includes("SAFEWAY")) return "Safeway";
-  if (n.includes("COSTCO")) return "Costco";
-  if (n.includes("SHELL")) return "Shell";
-
-  return n.charAt(0) + n.slice(1).toLowerCase();
-};
-
-const items = rows.map(r => {
-  const [date, store, amount] = r.split(",");
-  if (!date || !store || !amount) return null;
-
-  return {
-    date: date.trim(),
-    store: normalizeVendor(store),
-    amount: Math.abs(parseFloat(amount)),
-    category: ""
-  };
-}).filter(Boolean);
+              const items = rows.map(r => {
+                const applyVendorRule = (name) => {
+                  const upper = name.toUpperCase();
+                  for (let r of vendorRules) {
+                    if (upper.includes(r.match.toUpperCase())) return r.replace;
+                  }
+                  return name;
+                };
+                const [date, store, amount] = r.split(",");
+                if (!date || !store || !amount) return null;
+                return { date: date.trim(), store: store.trim(), amount: Math.abs(parseFloat(amount)), category: "" };
+              }).filter(Boolean);
               setPreview(items);
             };
             reader.readAsText(file);

@@ -505,28 +505,11 @@
             const reader = new FileReader();
             reader.onload = (evt) => {
               const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
-             const items = rows.map(r => {
-  const parts = r.split(",");
-  if (parts.length < 3) return null;
-
-  let rawDate = parts[0] ? parts[0].trim() : "";
-  let store = parts[1] ? parts[1].trim() : "";
-  let rawAmount = parts[2] ? parts[2].trim() : "";
-
-  // Fix date (MM/DD/YYYY → YYYY-MM-DD)
-  let date = rawDate;
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(rawDate)) {
-    const [mm, dd, yyyy] = rawDate.split("/");
-    date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-  }
-
-  // Clean amount ($, commas, negatives)
-  const amount = Math.abs(parseFloat((rawAmount || "").replace(/[^0-9.-]/g, "")) || 0);
-
-  if (!date || !store || !amount) return null;
-
-  return { date, store, amount, category: "" };
-}).filter(Boolean);
+              const items = rows.map(r => {
+                const [date, store, amount] = r.split(",");
+                if (!date || !store || !amount) return null;
+                return { date: date.trim(), store: store.trim(), amount: Math.abs(parseFloat(amount)), category: "" };
+              }).filter(Boolean);
               setPreview(items);
             };
             reader.readAsText(file);
@@ -585,14 +568,17 @@
 
       // LIST WITH DATES
       React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
-        filteredExpenses.map((e,i)=>
-          React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+        filteredExpenses.map((e,i)=>{
+          const originalIndex = expenses.findIndex(x => x === e);
+          return React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
             React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount} ${e.category ? '('+e.category+')' : ''}`),
             React.createElement("div", { className:"flex gap-2" },
-              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(i); } }, "Edit"),
-              React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==i)); } }, "Delete")
+              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
+              React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
             )
-          )
+          );
+        })
+      )
         )
       )
     );

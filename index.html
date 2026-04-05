@@ -38,6 +38,15 @@
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
     });
 
+    // RECURRING (Auto Debits)
+    const [ccDebits, setCcDebits] = useState(() => JSON.parse(localStorage.getItem("ccDebits")||"[]"));
+    const [bankDebits, setBankDebits] = useState(() => JSON.parse(localStorage.getItem("bankDebits")||"[]"));
+    const [ccForm, setCcForm] = useState({ name:"", amount:"", day:"" });
+    const [bankForm, setBankForm] = useState({ name:"", amount:"", day:"" });
+
+    useEffect(()=>localStorage.setItem("ccDebits", JSON.stringify(ccDebits)), [ccDebits]);
+    useEffect(()=>localStorage.setItem("bankDebits", JSON.stringify(bankDebits)), [bankDebits]);
+
     useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
     useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
     useEffect(() => localStorage.setItem("expenseCategories", JSON.stringify(categories)), [categories]);
@@ -72,7 +81,8 @@
     const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
       React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
       React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports"),
-      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup")
+      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup"),
+      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("autodebits") }, "Auto Debits")
     );
 
     if (view === "reports") {
@@ -254,6 +264,60 @@
               )
             )
           )
+        )
+      );
+    }
+
+    // AUTO DEBITS PAGE
+    if (view === "autodebits") {
+      const ccTotal = ccDebits.reduce((s,i)=>s+parseFloat(i.amount||0),0);
+      const bankTotal = bankDebits.reduce((s,i)=>s+parseFloat(i.amount||0),0);
+
+      return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+        nav,
+
+        // CREDIT CARD
+        React.createElement("div", { className:"bg-white p-4 rounded-2xl shadow mb-6" },
+          React.createElement("div", { className:"font-bold mb-2" }, "Credit Card Monthly Debits"),
+          React.createElement("div", { className:"mb-2" }, `Total: $${ccTotal.toFixed(2)}`),
+
+          React.createElement("div", { className:"mb-3" },
+            React.createElement("input", { placeholder:"Name", value:ccForm.name, onChange:e=>setCcForm({...ccForm,name:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Amount", value:ccForm.amount, onChange:e=>setCcForm({...ccForm,amount:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Day", value:ccForm.day, onChange:e=>setCcForm({...ccForm,day:e.target.value}), className:"border p-2 mr-2 w-20" }),
+            React.createElement("button", { className:"bg-blue-600 text-white px-3 py-2 rounded", onClick:()=>{
+              if(!ccForm.name||!ccForm.amount) return;
+              setCcDebits([...ccDebits, {...ccForm, amount:parseFloat(ccForm.amount)}]);
+              setCcForm({name:"",amount:"",day:""});
+            }}, "Add")
+          ),
+
+          ccDebits.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, `${d.name} - $${d.amount} (Day ${d.day||'-'})`),
+            React.createElement("button", { className:"text-red-600", onClick:()=>setCcDebits(ccDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+          ))
+        ),
+
+        // BANK
+        React.createElement("div", { className:"bg-white p-4 rounded-2xl shadow" },
+          React.createElement("div", { className:"font-bold mb-2" }, "Bank Account Monthly Debits"),
+          React.createElement("div", { className:"mb-2" }, `Total: $${bankTotal.toFixed(2)}`),
+
+          React.createElement("div", { className:"mb-3" },
+            React.createElement("input", { placeholder:"Name", value:bankForm.name, onChange:e=>setBankForm({...bankForm,name:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Amount", value:bankForm.amount, onChange:e=>setBankForm({...bankForm,amount:e.target.value}), className:"border p-2 mr-2" }),
+            React.createElement("input", { placeholder:"Day", value:bankForm.day, onChange:e=>setBankForm({...bankForm,day:e.target.value}), className:"border p-2 mr-2 w-20" }),
+            React.createElement("button", { className:"bg-blue-600 text-white px-3 py-2 rounded", onClick:()=>{
+              if(!bankForm.name||!bankForm.amount) return;
+              setBankDebits([...bankDebits, {...bankForm, amount:parseFloat(bankForm.amount)}]);
+              setBankForm({name:"",amount:"",day:""});
+            }}, "Add")
+          ),
+
+          bankDebits.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+            React.createElement("span", null, `${d.name} - $${d.amount} (Day ${d.day||'-'})`),
+            React.createElement("button", { className:"text-red-600", onClick:()=>setBankDebits(bankDebits.filter((_,idx)=>idx!==i)) }, "Delete")
+          ))
         )
       );
     }

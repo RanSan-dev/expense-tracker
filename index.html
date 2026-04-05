@@ -289,9 +289,16 @@
             React.createElement("input", { placeholder:"Day", value:ccForm.day, onChange:e=>setCcForm({...ccForm,day:e.target.value}), className:"border p-2 mr-2 w-20" }),
             React.createElement("button", { className:"bg-blue-600 text-white px-3 py-2 rounded", onClick:()=>{
               if(!ccForm.name||!ccForm.amount) return;
-              setCcDebits([...ccDebits, {...ccForm, amount:parseFloat(ccForm.amount)}]);
+              if(ccEditIndex !== null){
+                const updated = [...ccDebits];
+                updated[ccEditIndex] = {...ccForm, amount: parseFloat(ccForm.amount)};
+                setCcDebits(updated);
+                setCcEditIndex(null);
+              } else {
+                setCcDebits([...ccDebits, {...ccForm, amount: parseFloat(ccForm.amount)}]);
+              }
               setCcForm({name:"",amount:"",day:""});
-            }}, (typeof ccEditIndex !== 'undefined' && ccEditIndex !== null) || (typeof bankEditIndex !== 'undefined' && bankEditIndex !== null) ? "Update" : "Add")
+            }}, ccEditIndex !== null ? "Update" : "Add")
           ),
 
           ccDebits.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
@@ -300,7 +307,6 @@
               React.createElement("button", { className:"text-blue-600", onClick:()=>{ setCcForm(d); setCcEditIndex(i); } }, "Edit"),
               React.createElement("button", { className:"text-red-600", onClick:()=>setCcDebits(ccDebits.filter((_,idx)=>idx!==i)) }, "Delete")
             )
-          )) }, "Delete")
           ))
         ),
 
@@ -315,9 +321,16 @@
             React.createElement("input", { placeholder:"Day", value:bankForm.day, onChange:e=>setBankForm({...bankForm,day:e.target.value}), className:"border p-2 mr-2 w-20" }),
             React.createElement("button", { className:"bg-blue-600 text-white px-3 py-2 rounded", onClick:()=>{
               if(!bankForm.name||!bankForm.amount) return;
-              setBankDebits([...bankDebits, {...bankForm, amount:parseFloat(bankForm.amount)}]);
+              if(bankEditIndex !== null){
+                const updated = [...bankDebits];
+                updated[bankEditIndex] = {...bankForm, amount: parseFloat(bankForm.amount)};
+                setBankDebits(updated);
+                setBankEditIndex(null);
+              } else {
+                setBankDebits([...bankDebits, {...bankForm, amount: parseFloat(bankForm.amount)}]);
+              }
               setBankForm({name:"",amount:"",day:""});
-            }}, (typeof ccEditIndex !== 'undefined' && ccEditIndex !== null) || (typeof bankEditIndex !== 'undefined' && bankEditIndex !== null) ? "Update" : "Add")
+            }}, bankEditIndex !== null ? "Update" : "Add")
           ),
 
           bankDebits.map((d,i)=>React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
@@ -326,7 +339,6 @@
               React.createElement("button", { className:"text-blue-600", onClick:()=>{ setBankForm(d); setBankEditIndex(i); } }, "Edit"),
               React.createElement("button", { className:"text-red-600", onClick:()=>setBankDebits(bankDebits.filter((_,idx)=>idx!==i)) }, "Delete")
             )
-          )) }, "Delete")
           ))
         )
       );

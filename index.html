@@ -531,9 +531,18 @@ Budget: $${totalBudget.toFixed(2)}`);
                   }
                   return name;
                 };
+
                 const [date, store, amount] = r.split(",");
                 if (!date || !store || !amount) return null;
-                return { date: date.trim(), store: store.trim(), amount: Math.abs(parseFloat(amount)), category: "" };
+
+                const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
+
+                return {
+                  date: date.trim(),
+                  store: applyVendorRule(store.trim()),
+                  amount: cleanAmount,
+                  category: ""
+                };
               }).filter(Boolean);
               setPreview(items);
             };

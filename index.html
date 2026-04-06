@@ -524,7 +524,9 @@ Budget: $${totalBudget.toFixed(2)}`);
 
             reader.onload = (evt) => {
               try {
-                const rows = evt.target.result.split(//).slice(1).filter(r => r.trim());
+                const rows = evt.target.result.split(/
+?
+/).slice(1).filter(r => r && r.trim());
 
                 const items = rows.map(r => {
                   const parts = r.split(",");

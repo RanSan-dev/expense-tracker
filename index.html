@@ -570,19 +570,13 @@ Budget: $${totalBudget.toFixed(2)}`);
                 }
 
                 const parts = r.split(",");
-                let date = (parts[0] || "").trim();
-                let store = (parts[1] || "").trim();
-                let amount = (parts[2] || "").trim();
-                if (!date || !store || !amount) return null;
+                let rawDate = (parts[0] || "").trim();
+let date = rawDate;
 
-                const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
-
-                return {
-                  let fixedDate = date.trim();
-
-if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fixedDate)) {
-  const [mm, dd, yyyy] = fixedDate.split("/");
-  fixedDate = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+if (rawDate.includes("/")) {
+  const [mm, dd, yyyy] = rawDate.split("/");
+  date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+}
 }
 
 let fixedDate = date.trim();

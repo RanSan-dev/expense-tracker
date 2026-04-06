@@ -548,6 +548,13 @@ if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fixedDate)) {
   fixedDate = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
 }
 
+let fixedDate = date.trim();
+
+if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fixedDate)) {
+  const [mm, dd, yyyy] = fixedDate.split("/");
+  fixedDate = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+}
+
 return {
   date: fixedDate,
   store: applyVendorRule(store.trim()),

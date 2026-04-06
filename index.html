@@ -541,7 +541,19 @@ Budget: $${totalBudget.toFixed(2)}`);
                 const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
 
                 return {
-                  date: date.trim(),
+                  let fixedDate = date.trim();
+
+if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fixedDate)) {
+  const [mm, dd, yyyy] = fixedDate.split("/");
+  fixedDate = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+}
+
+return {
+  date: fixedDate,
+  store: applyVendorRule(store.trim()),
+  amount: cleanAmount,
+  category: ""
+};
                   store: applyVendorRule(store.trim()),
                   amount: cleanAmount,
                   category: ""

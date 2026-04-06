@@ -521,89 +521,61 @@ Budget: $${totalBudget.toFixed(2)}`);
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
+
             reader.onload = (evt) => {
-             reader.onload = (evt) => {
-  const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+              try {
+                const rows = evt.target.result.split("
+").slice(1).filter(r => r.trim());
 
-  const items = rows.map(r => {
-    const parts = r.split(",");
-    if (parts.length < 3) return null;
+                const items = rows.map(r => {
+                  const parts = r.split(",");
+                  if (parts.length < 3) return null;
 
-    let rawDate = (parts[0] || "").trim();
-    let store = (parts[1] || "").trim();
-    let amount = (parts[2] || "").trim();
+                  let rawDate = (parts[0] || "").trim();
+                  let store = (parts[1] || "").trim();
+                  let amount = (parts[2] || "").trim();
 
-    if (!rawDate || !store || !amount) return null;
+                  if (!rawDate || !store || !amount) return null;
 
-    // ✅ FIX DATE (THIS IS THE MAIN ISSUE)
-    let date = rawDate;
-    if (rawDate.includes("/")) {
-      const [mm, dd, yyyy] = rawDate.split("/");
-      date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-    }
+                  // SAFE DATE FIX
+                  let date = rawDate;
+                  if (rawDate.includes("/")) {
+                    const split = rawDate.split("/");
+                    if (split.length === 3) {
+                      const mm = split[0].padStart(2, "0");
+                      const dd = split[1].padStart(2, "0");
+                      const yyyy = split[2];
+                      date = `${yyyy}-${mm}-${dd}`;
+                    }
+                  }
 
-    const cleanAmount = Math.abs(
-      parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0
-    );
+                  const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
 
-    // ✅ APPLY VENDOR RULES (safe)
-    let cleanStore = store;
-    const upper = store.toUpperCase();
-    for (let rule of vendorRules) {
-      if (rule.match && upper.includes(rule.match.toUpperCase())) {
-        cleanStore = rule.replace;
-        break;
-      }
-    }
+                  // SAFE vendor rule
+                  let cleanStore = store;
+                  const upper = store.toUpperCase();
+                  for (let rule of vendorRules) {
+                    if (rule.match && upper.includes(rule.match.toUpperCase())) {
+                      cleanStore = rule.replace;
+                      break;
+                    }
+                  }
 
-    return {
-      date,
-      store: cleanStore,
-      amount: cleanAmount,
-      category: ""
-    };
-  }).filter(Boolean);
+                  return {
+                    date,
+                    store: cleanStore,
+                    amount: cleanAmount,
+                    category: ""
+                  };
+                }).filter(Boolean);
 
-  setPreview(items);
-};  }
-                  return name;
-                }
-
-                const parts = r.split(",");
-                let rawDate = (parts[0] || "").trim();
-let date = rawDate;
-
-if (rawDate.includes("/")) {
-  const [mm, dd, yyyy] = rawDate.split("/");
-  date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-}
-}
-
-let fixedDate = date.trim();
-
-if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fixedDate)) {
-  const [mm, dd, yyyy] = fixedDate.split("/");
-  fixedDate = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-}
-
-return {
-date: date.includes("/") 
-  ? (() => {
-      const [mm, dd, yyyy] = date.split("/");
-      return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-    })()
-  : date,
-  store: applyVendorRule(store.trim()),
-  amount: cleanAmount,
-  category: ""
-};
-                  store: applyVendorRule(store.trim()),
-                  amount: cleanAmount,
-                  category: ""
-                };
-              }).filter(Boolean);
-              setPreview(items);
+                setPreview(items);
+              } catch (err) {
+                console.error("CSV ERROR:", err);
+                alert("CSV import error — file format issue.");
+              }
             };
+
             reader.readAsText(file);
           }
         }),
@@ -613,13 +585,9 @@ date: date.includes("/")
           React.createElement("button", {
             className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
             onClick: () => {
-              let rawDate = (parts[0] || "").trim();
-let date = rawDate;
-
-if (rawDate.includes("/")) {
-  const [mm, dd, yyyy] = rawDate.split("/");
-  date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-}
+              setExpenses(prev => [...prev, ...preview]);
+              preview.forEach(p => rememberStore(p.store));
+              setPreview([]);
             }
           }, "Submit Import")
         )

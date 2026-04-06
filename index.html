@@ -598,60 +598,46 @@ Budget: $${totalBudget.toFixed(2)}`);
         preview.length > 0 ? React.createElement("div", { className: "mt-3" },
           preview.slice(0,5).map((p,i)=>React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)),
           React.createElement("button", {
-            className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
-           onClick: () => {
-  const normalize = (name) =>
-    (name || "")
-      .toUpperCase()
-      .replace(/[^A-Z ]/g, "")
-      .replace(/\b(US|STORE|ONLINE|PAYMENT|DEBIT|CREDIT|CARD|PURCHASE|MKTPLACE|MKT|PMTS)\b/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+  className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
+  onClick: () => {
 
-  const map = {};
+    const normalize = (name) =>
+      (name || "")
+        .toUpperCase()
+        .replace(/[^A-Z ]/g, "")
+        .replace(/\b(US|STORE|ONLINE|PAYMENT|DEBIT|CREDIT|CARD|PURCHASE|MKTPLACE|MKT|PMTS)\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
-  preview.forEach(p => {
-    const key = normalize(p.store);
-    if (!key) return;
-    if (!map[key]) map[key] = [];
-    map[key].push(p.store);
-  });
+    const groups = {};
 
-  const autoRules = Object.entries(map)
-    .filter(([k, v]) => v.length > 1)
-    .map(([k, v]) => ({
-      match: k.toLowerCase(),
-      replace: v[0]
-    }));
+    preview.forEach(p => {
+      const key = normalize(p.store);
+      if (!key) return;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p.store);
+    });
 
-  if (autoRules.length) {
-    setVendorRules(prev => [...prev, ...autoRules]);
+    const repByKey = {};
+
+    Object.entries(groups).forEach(([k, list]) => {
+      const rep = list.sort((a,b)=> b.length - a.length)[0];
+      repByKey[k] = rep;
+    });
+
+    const cleaned = preview.map(p => {
+      const key = normalize(p.store);
+      return {
+        ...p,
+        store: repByKey[key] || p.store
+      };
+    });
+
+    setExpenses(prev => [...prev, ...cleaned]);
+    cleaned.forEach(p => rememberStore(p.store));
+    setPreview([]);
   }
-
-  const cleaned = preview.map(p => {
-    const norm = normalize(p.store);
-    let newStore = p.store;
-
-    for (let r of [...vendorRules, ...autoRules]) {
-      if (!r.match || !r.replace) continue;
-
-      const keys = r.match.split(",").map(x => x.trim().toUpperCase());
-
-      if (keys.some(k => norm.includes(k))) {
-        newStore = r.replace;
-        break;
-      }
-    }
-
-    return { ...p, store: newStore };
-  });
-
-  setExpenses(prev => [...prev, ...cleaned]);
-  cleaned.forEach(p => rememberStore(p.store));
-  setPreview([]);
-}
-            }
-          }, "Submit Import")
+}, "Submit Import")
         ) : null,
       ),
 

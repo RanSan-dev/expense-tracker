@@ -615,7 +615,7 @@ React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" }
     }
   }),
 
-  preview.length > 0 ? React.createElement("div", { className: "mt-3" },
+  preview.length > 0 && React.createElement("div", { className: "mt-3" },
     preview.slice(0,5).map((p,i)=>
       React.createElement("div", { key:i, className:"text-sm" },
         `${p.date} | ${p.store} | $${p.amount}`

@@ -558,7 +558,7 @@ Budget: $${totalBudget.toFixed(2)}`);
           React.createElement("button", {
             className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
             onClick: () => {
-              setExpenses([...expenses, ...preview]);
+              setExpenses(prev => [...prev, ...preview]);
               preview.forEach(p => rememberStore(p.store));
               setPreview([]);
             }

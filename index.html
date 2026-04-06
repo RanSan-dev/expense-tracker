@@ -584,9 +584,15 @@ Budget: $${totalBudget.toFixed(2)}`);
           React.createElement("button", {
             className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
             onClick: () => {
-              setExpenses(prev => [...prev, ...preview]);
-              preview.forEach(p => rememberStore(p.store));
-              setPreview([]);
+  const adjusted = preview.map(p => ({
+    ...p,
+    date: `${selectedMonth}-01`
+  }));
+
+  setExpenses(prev => [...prev, ...adjusted]);
+  adjusted.forEach(p => rememberStore(p.store));
+  setPreview([]);
+}
             }
           }, "Submit Import")
         )

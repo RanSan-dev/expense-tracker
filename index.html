@@ -532,7 +532,10 @@ Budget: $${totalBudget.toFixed(2)}`);
                   return name;
                 };
 
-               const [rawDate, store, amount] = r.split(",");
+               const parts = r.split(",");
+let date = (parts[0] || "").trim();
+let store = (parts[1] || "").trim();
+let amount = (parts[2] || "").trim();
 if (!rawDate || !store || !amount) return null;
 
 // FIX DATE FORMAT

@@ -255,10 +255,21 @@ Budget: $${totalBudget.toFixed(2)}`);
 
     if (view === "setup") {
       const applyVendorRule = (name) => {
+        if (!name) return "";
         const upper = name.toUpperCase();
+
         for (let rule of vendorRules) {
-                    if (rule.match && upper.includes(rule.match.toUpperCase())) return rule.replace;
-                  }
+          if (!rule.match || !rule.replace) continue;
+
+          // support multiple keywords separated by comma
+          const keywords = rule.match.split(",").map(k => k.trim().toUpperCase()).filter(Boolean);
+
+          // match if ANY keyword is found
+          const matched = keywords.some(k => upper.includes(k));
+
+          if (matched) return rule.replace;
+        }
+
         return name;
       };
       return React.createElement("div", { className: "p-6" },
@@ -554,7 +565,12 @@ Budget: $${totalBudget.toFixed(2)}`);
                   let cleanStore = store;
                   const upper = store.toUpperCase();
                   for (let rule of vendorRules) {
-                    if (rule.match && upper.includes(rule.match.toUpperCase())) {
+                    if (!rule.match || !rule.replace) continue;
+
+                    const keywords = rule.match.split(",").map(k => k.trim().toUpperCase()).filter(Boolean);
+                    const matched = keywords.some(k => upper.includes(k));
+
+                    if (matched) {
                       cleanStore = rule.replace;
                       break;
                     }

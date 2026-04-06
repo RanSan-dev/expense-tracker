@@ -599,10 +599,57 @@ Budget: $${totalBudget.toFixed(2)}`);
           preview.slice(0,5).map((p,i)=>React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)),
           React.createElement("button", {
             className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
-            onClick: () => {
-              setExpenses(prev => [...prev, ...preview]);
-              preview.forEach(p => rememberStore(p.store));
-              setPreview([]);
+           onClick: () => {
+  const normalize = (name) =>
+    (name || "")
+      .toUpperCase()
+      .replace(/[^A-Z ]/g, "")
+      .replace(/\b(US|STORE|ONLINE|PAYMENT|DEBIT|CREDIT|CARD|PURCHASE|MKTPLACE|MKT|PMTS)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const map = {};
+
+  preview.forEach(p => {
+    const key = normalize(p.store);
+    if (!key) return;
+    if (!map[key]) map[key] = [];
+    map[key].push(p.store);
+  });
+
+  const autoRules = Object.entries(map)
+    .filter(([k, v]) => v.length > 1)
+    .map(([k, v]) => ({
+      match: k.toLowerCase(),
+      replace: v[0]
+    }));
+
+  if (autoRules.length) {
+    setVendorRules(prev => [...prev, ...autoRules]);
+  }
+
+  const cleaned = preview.map(p => {
+    const norm = normalize(p.store);
+    let newStore = p.store;
+
+    for (let r of [...vendorRules, ...autoRules]) {
+      if (!r.match || !r.replace) continue;
+
+      const keys = r.match.split(",").map(x => x.trim().toUpperCase());
+
+      if (keys.some(k => norm.includes(k))) {
+        newStore = r.replace;
+        break;
+      }
+    }
+
+    return { ...p, store: newStore };
+  });
+
+  setExpenses(prev => [...prev, ...cleaned]);
+  cleaned.forEach(p => rememberStore(p.store));
+  setPreview([]);
+}
             }
           }, "Submit Import")
         ) : null

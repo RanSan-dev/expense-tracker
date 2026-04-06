@@ -524,7 +524,9 @@ Budget: $${totalBudget.toFixed(2)}`);
 
             reader.onload = (evt) => {
               try {
-                const rows = evt.target.result.split("").slice(1).filter(r => r.trim());
+                const rows = evt.target.result.split(/
+?
+/).slice(1).filter(r => r.trim());
 
                 const items = rows.map(r => {
                   const parts = r.split(",");
@@ -584,15 +586,9 @@ Budget: $${totalBudget.toFixed(2)}`);
           React.createElement("button", {
             className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
             onClick: () => {
-  const adjusted = preview.map(p => ({
-    ...p,
-    date: `${selectedMonth}-01`
-  }));
-
-  setExpenses(prev => [...prev, ...adjusted]);
-  adjusted.forEach(p => rememberStore(p.store));
-  setPreview([]);
-
+              setExpenses(prev => [...prev, ...preview]);
+              preview.forEach(p => rememberStore(p.store));
+              setPreview([]);
             }
           }, "Submit Import")
         )

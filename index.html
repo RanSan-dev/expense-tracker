@@ -556,7 +556,12 @@ if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fixedDate)) {
 }
 
 return {
-  date: fixedDate,
+date: date.includes("/") 
+  ? (() => {
+      const [mm, dd, yyyy] = date.split("/");
+      return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+    })()
+  : date,
   store: applyVendorRule(store.trim()),
   amount: cleanAmount,
   category: ""

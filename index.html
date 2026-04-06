@@ -522,13 +522,50 @@ Budget: $${totalBudget.toFixed(2)}`);
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
-              const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
-              const items = rows.map(r => {
-                const applyVendorRule = (name) => {
-                  const upper = name.toUpperCase();
-                  for (let rule of vendorRules) {
-                    if (rule.match && upper.includes(rule.match.toUpperCase())) return rule.replace;
-                  }
+             reader.onload = (evt) => {
+  const rows = evt.target.result.split("\n").slice(1).filter(r => r.trim());
+
+  const items = rows.map(r => {
+    const parts = r.split(",");
+    if (parts.length < 3) return null;
+
+    let rawDate = (parts[0] || "").trim();
+    let store = (parts[1] || "").trim();
+    let amount = (parts[2] || "").trim();
+
+    if (!rawDate || !store || !amount) return null;
+
+    // ✅ FIX DATE (THIS IS THE MAIN ISSUE)
+    let date = rawDate;
+    if (rawDate.includes("/")) {
+      const [mm, dd, yyyy] = rawDate.split("/");
+      date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+    }
+
+    const cleanAmount = Math.abs(
+      parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0
+    );
+
+    // ✅ APPLY VENDOR RULES (safe)
+    let cleanStore = store;
+    const upper = store.toUpperCase();
+    for (let rule of vendorRules) {
+      if (rule.match && upper.includes(rule.match.toUpperCase())) {
+        cleanStore = rule.replace;
+        break;
+      }
+    }
+
+    return {
+      date,
+      store: cleanStore,
+      amount: cleanAmount,
+      category: ""
+    };
+  }).filter(Boolean);
+
+  setPreview(items);
+};  }
                   return name;
                 };
 

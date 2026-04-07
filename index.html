@@ -35,6 +35,10 @@
     const [vendorRules, setVendorRules] = useState(() => JSON.parse(localStorage.getItem("vendorRules") || "[]"));
     const [vendorRuleForm, setVendorRuleForm] = useState({ match:"", replace:"" });
 
+    // 🔥 CATEGORY RULES
+    const [categoryRules, setCategoryRules] = useState(() => JSON.parse(localStorage.getItem("categoryRules") || "[]"));
+    const [categoryRuleForm, setCategoryRuleForm] = useState({ match:"", category:"" });
+
     const [selectedMonth, setSelectedMonth] = useState(() => {
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
@@ -55,6 +59,7 @@
 
     useEffect(()=>localStorage.setItem("incomeList", JSON.stringify(income)), [income]);
     useEffect(()=>localStorage.setItem("vendorRules", JSON.stringify(vendorRules)), [vendorRules]);
+    useEffect(()=>localStorage.setItem("categoryRules", JSON.stringify(categoryRules)), [categoryRules]);
 
     useEffect(() => localStorage.setItem("expenseAppData", JSON.stringify(expenses)), [expenses]);
     useEffect(() => localStorage.setItem("expenseStores", JSON.stringify(storeList)), [storeList]);
@@ -73,6 +78,15 @@
       // 🔥 AUTO CATEGORY
       const getCategory = (store) => {
         const s = (store || "").toUpperCase();
+
+        // user-defined rules first
+        for (let rule of categoryRules) {
+          if (!rule.match || !rule.category) continue;
+          const keys = rule.match.split(",").map(k => k.trim().toUpperCase());
+          if (keys.some(k => s.includes(k))) return rule.category;
+        }
+
+        // defaults
         if (s.includes("AMAZON")) return "Shopping";
         if (s.includes("WALMART")) return "Groceries";
         if (s.includes("COSTCO")) return "Groceries";
@@ -342,6 +356,42 @@ Budget: $${totalBudget.toFixed(2)}`);
           )
         ),
 
+        // 🔥 CATEGORY RULES UI
+        React.createElement("div", { className: "bg-white p-4 rounded shadow mb-4" },
+          React.createElement("div", { className: "font-bold mb-2" }, "Category Rules"),
+          React.createElement("div", { className:"mb-3" },
+            React.createElement("input", {
+              placeholder:"Match (e.g. AMAZON)",
+              value: categoryRuleForm.match,
+              onChange: e=>setCategoryRuleForm({...categoryRuleForm, match:e.target.value}),
+              className:"border p-2 mr-2"
+            }),
+            React.createElement("input", {
+              placeholder:"Category (e.g. Shopping)",
+              value: categoryRuleForm.category,
+              onChange: e=>setCategoryRuleForm({...categoryRuleForm, category:e.target.value}),
+              className:"border p-2 mr-2"
+            }),
+            React.createElement("button", {
+              className:"bg-green-600 text-white px-3 py-2 rounded",
+              onClick:()=>{
+                if(!categoryRuleForm.match || !categoryRuleForm.category) return;
+                setCategoryRules([...categoryRules, categoryRuleForm]);
+                setCategoryRuleForm({match:"", category:""});
+              }
+            },"Add Rule")
+          ),
+          categoryRules.map((r,i)=>
+            React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
+              React.createElement("span", null, `${r.match} → ${r.category}`),
+              React.createElement("button", {
+                className:"text-red-600",
+                onClick:()=>setCategoryRules(categoryRules.filter((_,idx)=>idx!==i))
+              },"Delete")
+            )
+          )
+        ),
+
         React.createElement("div", { className: "bg-white p-4 rounded shadow" },
           React.createElement("div", { className: "font-bold mb-2" }, "Categories & Budgets"),
           categories.map((c,i) =>
@@ -591,14 +641,23 @@ Budget: $${totalBudget.toFixed(2)}`);
 
                   // 🔥 AUTO CATEGORY (CSV)
                   const getCategory = (store) => {
-                    const s = (store || "").toUpperCase();
-                    if (s.includes("AMAZON")) return "Shopping";
-                    if (s.includes("WALMART")) return "Groceries";
-                    if (s.includes("COSTCO")) return "Groceries";
-                    if (s.includes("CHEVRON") || s.includes("SHELL") || s.includes("76")) return "Gas";
-                    if (s.includes("STARBUCKS")) return "Food";
-                    return "";
-                  };
+        const s = (store || "").toUpperCase();
+
+        // user-defined rules first
+        for (let rule of categoryRules) {
+          if (!rule.match || !rule.category) continue;
+          const keys = rule.match.split(",").map(k => k.trim().toUpperCase());
+          if (keys.some(k => s.includes(k))) return rule.category;
+        }
+
+        // defaults
+        if (s.includes("AMAZON")) return "Shopping";
+        if (s.includes("WALMART")) return "Groceries";
+        if (s.includes("COSTCO")) return "Groceries";
+        if (s.includes("CHEVRON") || s.includes("SHELL") || s.includes("76")) return "Gas";
+        if (s.includes("STARBUCKS")) return "Food";
+        return "";
+      };
 
                   return {
                     date,

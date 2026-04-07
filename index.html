@@ -366,12 +366,14 @@ Budget: $${totalBudget.toFixed(2)}`);
               onChange: e=>setCategoryRuleForm({...categoryRuleForm, match:e.target.value}),
               className:"border p-2 mr-2"
             }),
-            React.createElement("input", {
-              placeholder:"Category (e.g. Shopping)",
+            React.createElement("select", {
               value: categoryRuleForm.category,
               onChange: e=>setCategoryRuleForm({...categoryRuleForm, category:e.target.value}),
               className:"border p-2 mr-2"
-            }),
+            },
+              React.createElement("option", { value:"" }, "Select Category"),
+              categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+            ),
             React.createElement("button", {
               className:"bg-green-600 text-white px-3 py-2 rounded",
               onClick:()=>{

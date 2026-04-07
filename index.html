@@ -555,9 +555,12 @@ Budget: $${totalBudget.toFixed(2)}`);
 
       const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {
         const cat = e.category || "Uncategorized";
-        acc[cat] = (acc[cat] || 0) + e.amount;
+        const val = Math.abs(parseFloat(e.amount) || 0);
+        acc[cat] = (acc[cat] || 0) + val;
         return acc;
       }, {});
+
+      const totalAbs = Object.values(categoryTotalsDash).reduce((a,b)=>a+b,0);
 
       const topCategory = Object.entries(categoryTotalsDash).sort((a,b)=>b[1]-a[1])[0];
 
@@ -590,14 +593,20 @@ Budget: $${totalBudget.toFixed(2)}`);
         React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
           React.createElement("div", { className: "font-bold mb-2" }, "Spending by Category"),
           Object.entries(categoryTotalsDash).map(([cat, amt], i) => {
-            const percent = total ? (amt / total) * 100 : 0;
+            const percent = totalAbs ? (amt / totalAbs) * 100 : 0;
             return React.createElement("div", { key:i, className:"mb-2" },
-              React.createElement("div", { className:"text-sm" }, `${cat} - $${amt.toFixed(2)}`),
+              React.createElement("div", { className:"text-sm flex justify-between" },
+                React.createElement("span", null, cat),
+                React.createElement("span", null, `$${amt.toFixed(2)}`)
+              ),
               React.createElement("div", { className:"w-full bg-gray-200 h-2 rounded" },
                 React.createElement("div", {
                   className:"bg-blue-500 h-2 rounded",
                   style:{ width: `${percent}%` }
                 })
+              )
+            );
+          })
               )
             );
           })
@@ -732,12 +741,21 @@ Budget: $${totalBudget.toFixed(2)}`);
             },"Delete Selected")
           ),
 
+          // 🔥 HEADER ROW
+          React.createElement("div", { className:"grid grid-cols-5 font-semibold text-sm border-b pb-1 mb-1" },
+            React.createElement("div", null, ""),
+            React.createElement("div", null, "Date"),
+            React.createElement("div", null, "Vendor"),
+            React.createElement("div", null, "Category"),
+            React.createElement("div", { className:"text-right" }, "Amount")
+          ),
+
           filteredExpenses.map((e,i)=>{
             const originalIndex = expenses.findIndex(x => x === e);
             const isSelected = selectedItems.includes(originalIndex);
 
-            return React.createElement("div", { key:i, className:"flex justify-between items-center border-b py-1" },
-              React.createElement("div", { className:"flex items-center gap-2" },
+            return React.createElement("div", { key:i, className:"grid grid-cols-5 items-center border-b py-1 text-sm" },
+              React.createElement("div", null,
                 React.createElement("input", {
                   type:"checkbox",
                   checked:isSelected,
@@ -748,7 +766,18 @@ Budget: $${totalBudget.toFixed(2)}`);
                       setSelectedItems([...selectedItems, originalIndex]);
                     }
                   }
-                }),
+                })
+              ),
+              React.createElement("div", null, e.date),
+              React.createElement("div", null, e.store),
+              React.createElement("div", null, e.category || ""),
+              React.createElement("div", { className:"text-right" }, `$${(parseFloat(e.amount)||0).toFixed(2)}`),
+              React.createElement("div", { className:"col-span-5 flex gap-2 justify-end" },
+                React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
+                React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
+              )
+            );
+          }),
                 React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount}`)
               ),
               React.createElement("div", { className:"flex gap-2" },

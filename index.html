@@ -70,11 +70,32 @@
     const handleSubmit = () => {
       if (!form.date || !form.store || !form.amount) return;
 
+      // 🔥 AUTO CATEGORY
+      const getCategory = (store) => {
+        const s = (store || "").toUpperCase();
+        if (s.includes("AMAZON")) return "Shopping";
+        if (s.includes("WALMART")) return "Groceries";
+        if (s.includes("COSTCO")) return "Groceries";
+        if (s.includes("CHEVRON") || s.includes("SHELL") || s.includes("76")) return "Gas";
+        if (s.includes("STARBUCKS")) return "Food";
+        return "";
+      };
+
+      const autoCategory = form.category || getCategory(form.store);
+
       rememberStore(form.store);
 
       if (editIndex !== null) {
         const updated = [...expenses];
-        updated[editIndex] = { ...form, amount: parseFloat(form.amount) };
+        updated[editIndex] = { ...form, category: autoCategory, amount: parseFloat(form.amount) };
+        setExpenses(updated);
+        setEditIndex(null);
+      } else {
+        setExpenses([...expenses, { ...form, category: autoCategory, amount: parseFloat(form.amount) }]);
+      }
+
+      setForm({ date: "", store: "", amount: "", category: "" });
+    };
         setExpenses(updated);
         setEditIndex(null);
       } else {
@@ -576,11 +597,22 @@ Budget: $${totalBudget.toFixed(2)}`);
                     }
                   }
 
+                  // 🔥 AUTO CATEGORY (CSV)
+                  const getCategory = (store) => {
+                    const s = (store || "").toUpperCase();
+                    if (s.includes("AMAZON")) return "Shopping";
+                    if (s.includes("WALMART")) return "Groceries";
+                    if (s.includes("COSTCO")) return "Groceries";
+                    if (s.includes("CHEVRON") || s.includes("SHELL") || s.includes("76")) return "Gas";
+                    if (s.includes("STARBUCKS")) return "Food";
+                    return "";
+                  };
+
                   return {
                     date,
                     store: cleanStore,
                     amount: cleanAmount,
-                    category: ""
+                    category: getCategory(cleanStore)
                   };
                 }).filter(Boolean);
 

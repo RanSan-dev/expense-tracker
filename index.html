@@ -630,7 +630,9 @@ Budget: $${totalBudget.toFixed(2)}`);
               const reader = new FileReader();
               reader.onload = (evt) => {
                 const text = evt.target.result;
-                const rows = (text || "").split("").slice(1);
+                const rows = (text || "").split(/
+?
+/).slice(1);
                 const parsed = rows.map(r => {
                   const cols = r.split(",");
                   return {

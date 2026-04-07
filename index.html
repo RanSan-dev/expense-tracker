@@ -522,117 +522,90 @@ Budget: $${totalBudget.toFixed(2)}`);
         React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
       ),
 
-// CSV IMPORT (CLEAN REBUILD)
-React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
-  React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+      // CSV IMPORT
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
+        React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
+        React.createElement("input", {
+          type: "file",
+          accept: ".csv",
+          onChange: (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
 
-  React.createElement("input", {
-    type: "file",
-    accept: ".csv",
-    onChange: (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+            reader.onload = (evt) => {
+              try {
+                const rows = evt.target.result.split(/\r?\n/).slice(1).filter(r => r && r.trim());
 
-      const reader = new FileReader();
+                const items = rows.map(r => {
+                  const parts = r.split(",");
+                  if (parts.length < 3) return null;
 
-      reader.onload = (evt) => {
-        try {
-          const rows = evt.target.result.split(/\r?\n/).filter(r => r.trim());
+                  let rawDate = (parts[0] || "").trim();
+                  let store = (parts[1] || "").trim();
+                  let amount = (parts[2] || "").trim();
 
-          const cleanName = (store) => {
-            let s = (store || "").toUpperCase();
+                  if (!rawDate || !store || !amount) return null;
 
-            s = s
-              .replace(/\d+/g, "")
-              .replace(/[^A-Z ]/g, "")
-              .replace(/\b(US|STORE|ONLINE|PAYMENT|DEBIT|CREDIT|CARD|PURCHASE|MKTPLACE|MKT|PMTS|PORTLAND|OR)\b/g, "")
-              .replace(/\s+/g, " ")
-              .trim();
+                  // SAFE DATE FIX
+                  let date = rawDate;
+                  if (rawDate.includes("/")) {
+                    const split = rawDate.split("/");
+                    if (split.length === 3) {
+                      const mm = split[0].padStart(2, "0");
+                      const dd = split[1].padStart(2, "0");
+                      const yyyy = split[2];
+                      date = `${yyyy}-${mm}-${dd}`;
+                    }
+                  }
 
-            if (!s) return store;
+                  const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
 
-            const word = s.split(" ")[0];
+                  // SAFE vendor rule
+                  let cleanStore = store;
+                  const upper = store.toUpperCase();
+                  for (let rule of vendorRules) {
+                    if (!rule.match || !rule.replace) continue;
 
-            // Smart naming
-            if (word === "AMZN") return "Amazon";
-            if (word === "WM" || word === "WALMART") return "Walmart";
-            if (word === "COSTCO") return "Costco";
-            if (word === "CHEVRON") return "Chevron";
+                    const keywords = rule.match.split(",").map(k => k.trim().toUpperCase()).filter(Boolean);
+                    const matched = keywords.some(k => upper.includes(k));
 
-            return word.charAt(0) + word.slice(1).toLowerCase();
-          };
+                    if (matched) {
+                      cleanStore = rule.replace;
+                      break;
+                    }
+                  }
 
-          const items = rows.slice(1).map(r => {
-            const parts = r.split(",");
-            if (parts.length < 3) return null;
+                  return {
+                    date,
+                    store: cleanStore,
+                    amount: cleanAmount,
+                    category: ""
+                  };
+                }).filter(Boolean);
 
-            let rawDate = parts[0]?.trim();
-            let store = parts[1]?.trim();
-            let amount = parts[2]?.trim();
-
-            if (!rawDate || !store || !amount) return null;
-
-            // Date fix
-            let date = rawDate;
-            if (rawDate.includes("/")) {
-              const [mm, dd, yyyy] = rawDate.split("/");
-              date = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-            }
-
-            const cleanAmount = Math.abs(parseFloat(amount.replace(/[^0-9.-]/g, "")) || 0);
-
-            let cleanStore = cleanName(store);
-
-            // Apply your manual rules LAST
-            const upper = store.toUpperCase();
-            for (let rule of vendorRules) {
-              if (!rule.match || !rule.replace) continue;
-
-              const keys = rule.match.split(",").map(k => k.trim().toUpperCase());
-              if (keys.some(k => upper.includes(k))) {
-                cleanStore = rule.replace;
-                break;
+                setPreview(items);
+              } catch (err) {
+                console.error("CSV ERROR:", err);
+                alert("CSV import error — file format issue.");
               }
-            }
-
-            return {
-              date,
-              store: cleanStore,
-              amount: cleanAmount,
-              category: ""
             };
-          }).filter(Boolean);
 
-          setPreview(items);
+            reader.readAsText(file);
+          }
+        }),
 
-        } catch (err) {
-          console.error("CSV ERROR:", err);
-          alert("CSV import failed");
-        }
-      };
-
-      reader.readAsText(file);
-    }
-  }),
-
-  preview.length > 0 && React.createElement("div", { className: "mt-3" },
-    preview.slice(0,5).map((p,i)=>
-      React.createElement("div", { key:i, className:"text-sm" },
-        `${p.date} | ${p.store} | $${p.amount}`
-      )
-    ),
-
-    React.createElement("button", {
-      className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
-      onClick: () => {
-        setExpenses(prev => [...prev, ...preview]);
-        preview.forEach(p => rememberStore(p.store));
-        setPreview([]);
-      }
-    }, "Submit Import")
-
-  ) 
-),
+        preview.length > 0 && React.createElement("div", { className: "mt-3" },
+          preview.slice(0,5).map((p,i)=>React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)),
+          React.createElement("button", {
+            className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
+            onClick: () => {
+              setExpenses(prev => [...prev, ...preview]);
+              preview.forEach(p => rememberStore(p.store));
+              setPreview([]);
+            }
+          }, "Submit Import")
+        )
       ),
 
       // CATEGORY GRAPH

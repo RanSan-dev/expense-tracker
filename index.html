@@ -561,21 +561,43 @@ Budget: $${totalBudget.toFixed(2)}`);
 
                   const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
 
-                  // SAFE vendor rule
-                  let cleanStore = store;
-                  const upper = store.toUpperCase();
-                  for (let rule of vendorRules) {
-                    if (!rule.match || !rule.replace) continue;
+                  // 🔥 SIMPLE, SAFE CLEANING (THIS FIXES YOUR PROBLEM)
 
-                    const keywords = rule.match.split(",").map(k => k.trim().toUpperCase()).filter(Boolean);
-                    const matched = keywords.some(k => upper.includes(k));
+let s = (store || "").toUpperCase();
 
-                    if (matched) {
-                      cleanStore = rule.replace;
-                      break;
-                    }
-                  }
+s = s
+  .replace(/\d+/g, "") // remove numbers
+  .replace(/[^A-Z ]/g, "") // remove symbols
+  .replace(/\b(US|STORE|ONLINE|PAYMENT|DEBIT|CREDIT|CARD|PURCHASE|MKTPLACE|MKT|PMTS|PORTLAND|OR)\b/g, "")
+  .replace(/\s+/g, " ")
+  .trim();
 
+let cleanStore = store;
+
+if (s) {
+  let word = s.split(" ")[0];
+
+  // smart name fixes
+  if (word === "AMZN") word = "Amazon";
+  else if (word === "WM" || word === "WALMART") word = "Walmart";
+  else if (word === "COSTCO") word = "Costco";
+  else if (word === "CHEVRON") word = "Chevron";
+  else word = word.charAt(0) + word.slice(1).toLowerCase();
+
+  cleanStore = word;
+}
+
+// apply your rules AFTER (override)
+const upper = store.toUpperCase();
+for (let rule of vendorRules) {
+  if (!rule.match || !rule.replace) continue;
+
+  const keys = rule.match.split(",").map(k => k.trim().toUpperCase());
+  if (keys.some(k => upper.includes(k))) {
+    cleanStore = rule.replace;
+    break;
+  }
+}
                   return {
                     date,
                     store: cleanStore,

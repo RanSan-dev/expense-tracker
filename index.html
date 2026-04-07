@@ -126,13 +126,18 @@
     const filteredExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedMonth));
     const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    const nav = React.createElement("div", { className: "flex gap-4 mb-6" },
-      React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
-      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports"),
-      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup"),
-      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("autodebits") }, "Auto Debits"),
-      React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("income") }, "Income")
-    );
+    // 🔥 NAV COMPONENT
+    function NavBar({ setView }) {
+      return React.createElement("div", { className: "flex gap-4 mb-6" },
+        React.createElement("button", { className: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => setView("dashboard") }, "Dashboard"),
+        React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports"),
+        React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup"),
+        React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("autodebits") }, "Auto Debits"),
+        React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("income") }, "Income")
+      );
+    }
+
+    const nav = React.createElement(NavBar, { setView });
 
     if (view === "reports") {
       const categoryTotals = filteredExpenses.reduce((acc, e) => {
@@ -543,305 +548,107 @@ Budget: $${totalBudget.toFixed(2)}`);
       );
     }
 
-    // DASHBOARD (ULTIMATE)
-    const todayStr = new Date().toISOString().slice(0,10);
-    const todayTotal = filteredExpenses.filter(e=>e.date===todayStr).reduce((s,e)=>s+e.amount,0);
+    // 🔥 DASHBOARD VIEW COMPONENT
+    function DashboardView() {
+      const todayStr = new Date().toISOString().slice(0,10);
+      const todayTotal = filteredExpenses.filter(e=>e.date===todayStr).reduce((s,e)=>s+e.amount,0);
 
-    const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {
-      const cat = e.category || "Uncategorized";
-      acc[cat] = (acc[cat] || 0) + e.amount;
-      return acc;
-    }, {});
+      const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {
+        const cat = e.category || "Uncategorized";
+        acc[cat] = (acc[cat] || 0) + e.amount;
+        return acc;
+      }, {});
 
-    const topCategory = Object.entries(categoryTotalsDash).sort((a,b)=>b[1]-a[1])[0];
+      const topCategory = Object.entries(categoryTotalsDash).sort((a,b)=>b[1]-a[1])[0];
 
-    return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-      nav,
+      return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+        nav,
 
-      // Month
-      React.createElement("input", {
-        type: "month",
-        value: selectedMonth,
-        onChange: e => setSelectedMonth(e.target.value),
-        className: "border p-2 mb-4"
-      }),
-
-      // TOP CARDS
-      React.createElement("div", { className: "grid grid-cols-3 gap-4 mb-6" },
-        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
-          React.createElement("div", { className: "text-sm text-gray-500" }, "Total"),
-          React.createElement("div", { className: "text-2xl font-bold" }, `$${total.toFixed(2)}`)
-        ),
-        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
-          React.createElement("div", { className: "text-sm text-gray-500" }, "Today"),
-          React.createElement("div", { className: "text-2xl font-bold text-green-600" }, `$${todayTotal.toFixed(2)}`)
-        ),
-        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
-          React.createElement("div", { className: "text-sm text-gray-500" }, "Top Category"),
-          React.createElement("div", { className: "text-lg font-bold" }, topCategory ? `${topCategory[0]} ($${topCategory[1].toFixed(2)})` : "—")
-        )
-      ),
-
-      // FORM (top)
-      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
-        React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
-        React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
-        React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
-        React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
-        React.createElement("select", {
-          value: form.category,
-          onChange: e => setForm({ ...form, category: e.target.value }),
-          className: "border p-2 mr-2"
-        },
-          React.createElement("option", { value: "" }, "Category"),
-          categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
-        ),
-        React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
-      ),
-
-      // CSV IMPORT
-      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
-        React.createElement("div", { className: "font-bold mb-2" }, "Import CSV"),
         React.createElement("input", {
-          type: "file",
-          accept: ".csv",
-          onChange: (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-
-            reader.onload = (evt) => {
-              try {
-                const rows = evt.target.result.split(/\r?\n/).slice(1).filter(r => r && r.trim());
-
-                const items = rows.map(r => {
-                  const parts = r.split(",");
-                  if (parts.length < 3) return null;
-
-                  let rawDate = (parts[0] || "").trim();
-                  let store = (parts[1] || "").trim();
-                  let amount = (parts[2] || "").trim();
-
-                  if (!rawDate || !store || !amount) return null;
-
-                  // SAFE DATE FIX
-                  let date = rawDate;
-                  if (rawDate.includes("/")) {
-                    const split = rawDate.split("/");
-                    if (split.length === 3) {
-                      const mm = split[0].padStart(2, "0");
-                      const dd = split[1].padStart(2, "0");
-                      const yyyy = split[2];
-                      date = `${yyyy}-${mm}-${dd}`;
-                    }
-                  }
-
-                  const cleanAmount = Math.abs(parseFloat((amount || "").replace(/[^0-9.-]/g, "")) || 0);
-
-                  // SAFE vendor rule
-                  let cleanStore = store;
-                  const upper = store.toUpperCase();
-                  for (let rule of vendorRules) {
-                    if (!rule.match || !rule.replace) continue;
-
-                    const keywords = rule.match.split(",").map(k => k.trim().toUpperCase()).filter(Boolean);
-                    const matched = keywords.some(k => upper.includes(k));
-
-                    if (matched) {
-                      cleanStore = rule.replace;
-                      break;
-                    }
-                  }
-
-                  // 🔥 AUTO CATEGORY (CSV)
-                  const getCategory = (store) => {
-        const s = (store || "").toUpperCase();
-
-        // user-defined rules first
-        for (let rule of categoryRules) {
-          if (!rule.match || !rule.category) continue;
-          const keys = rule.match.split(",").map(k => k.trim().toUpperCase());
-          if (keys.some(k => s.includes(k))) return rule.category;
-        }
-
-        // defaults
-        if (s.includes("AMAZON")) return "Shopping";
-        if (s.includes("WALMART")) return "Groceries";
-        if (s.includes("COSTCO")) return "Groceries";
-        if (s.includes("CHEVRON") || s.includes("SHELL") || s.includes("76")) return "Gas";
-        if (s.includes("STARBUCKS")) return "Food";
-        return "";
-      };
-
-                  const category = getCategory(cleanStore);
-
-                  // 🔥 AUTO-LEARN CATEGORY (CSV)
-                  if (category && cleanStore) {
-                    setCategoryRules(prev => {
-                      const exists = prev.some(r => r.match.toUpperCase() === cleanStore.toUpperCase());
-                      if (exists) return prev;
-                      return [...prev, { match: cleanStore, category }];
-                    });
-                  }
-
-                  return {
-                    date,
-                    store: cleanStore,
-                    amount: cleanAmount,
-                    category
-                  };
-                }).filter(Boolean);
-
-                setPreview(items);
-              } catch (err) {
-                console.error("CSV ERROR:", err);
-                alert("CSV import error — file format issue.");
-              }
-            };
-
-            reader.readAsText(file);
-          }
+          type: "month",
+          value: selectedMonth,
+          onChange: e => setSelectedMonth(e.target.value),
+          className: "border p-2 mb-4"
         }),
 
-        preview.length > 0 && React.createElement("div", { className: "mt-3" },
-          React.createElement("div", { className:"font-semibold mb-2" }, "Review & Edit Before Import"),
-
-          preview.slice(0,20).map((p,i)=>
-            React.createElement("div", { key:i, className:"flex gap-2 mb-1 text-sm" },
-              React.createElement("input", {
-                value:p.date,
-                onChange:e=>{
-                  const updated=[...preview];
-                  updated[i]={...updated[i], date:e.target.value};
-                  setPreview(updated);
-                },
-                className:"border p-1 w-28"
-              }),
-              React.createElement("input", {
-                value:p.store,
-                onChange:e=>{
-                  const updated=[...preview];
-                  updated[i]={...updated[i], store:e.target.value};
-                  setPreview(updated);
-                },
-                className:"border p-1 w-40"
-              }),
-              React.createElement("input", {
-                value:p.amount,
-                onChange:e=>{
-                  const updated=[...preview];
-                  updated[i]={...updated[i], amount:parseFloat(e.target.value)||0};
-                  setPreview(updated);
-                },
-                className:"border p-1 w-24"
-              }),
-              React.createElement("select", {
-                value:p.category || "",
-                onChange:e=>{
-                  const updated=[...preview];
-                  updated[i]={...updated[i], category:e.target.value};
-                  setPreview(updated);
-                },
-                className:"border p-1"
-              },
-                React.createElement("option", { value:"" }, "Category"),
-                categories.map((c,ci)=>React.createElement("option", { key:ci, value:c }, c))
-              )
-            )
+        React.createElement("div", { className: "grid grid-cols-3 gap-4 mb-6" },
+          React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+            React.createElement("div", { className: "text-sm text-gray-500" }, "Total"),
+            React.createElement("div", { className: "text-2xl font-bold" }, `$${total.toFixed(2)}`)
           ),
-
-          React.createElement("button", {
-            className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
-            onClick: () => {
-              setExpenses(prev => [...prev, ...preview]);
-              preview.forEach(p => rememberStore(p.store));
-              setPreview([]);
-            }
-          }, "Submit Import")
-        )
-      ),
-
-      // CATEGORY GRAPH
-      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
-        React.createElement("div", { className: "font-bold mb-2" }, "Spending by Category"),
-        Object.entries(categoryTotalsDash).map(([cat, amt], i) =>
-          React.createElement("div", { key:i, className:"mb-2" },
-            React.createElement("div", { className:"flex justify-between text-sm" },
-              React.createElement("span", null, cat),
-              React.createElement("span", null, `$${amt.toFixed(2)}`)
-            ),
-            React.createElement("div", { className:"w-full bg-gray-200 h-3 rounded" },
-              React.createElement("div", {
-                className:"bg-blue-500 h-3 rounded",
-                style:{ width: `${total ? (amt/total)*100 : 0}%` }
-              })
-            )
-          )
-        )
-      ),
-
-      // SMART ALERTS
-      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
-        React.createElement("div", { className: "font-bold mb-2" }, "Alerts"),
-        categories.map((cat,i)=>{
-          const spent = (categoryTotalsDash[cat]||0);
-          const budget = parseFloat(budgets[cat]||0);
-          if(!budget) return null;
-          const percent = (spent/budget)*100;
-          if(percent>=100){
-            return React.createElement("div",{key:i,className:"text-red-600 text-sm"},`🔴 ${cat} over budget`);
-          }
-          if(percent>=80){
-            return React.createElement("div",{key:i,className:"text-yellow-600 text-sm"},`🟠 ${cat} at ${percent.toFixed(0)}%`);
-          }
-          return null;
-        })
-      ),
-
-      // LIST WITH DATES + SELECTION
-      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
-
-        // 🔥 BULK ACTIONS BAR
-        React.createElement("div", { className:"flex items-center gap-3 mb-3" },
-          React.createElement("button", {
-            className:"bg-red-600 text-white px-3 py-1 rounded",
-            onClick:()=>{
-              if(selectedItems.length===0) return;
-              setExpenses(expenses.filter((_,idx)=>!selectedItems.includes(idx)));
-              setSelectedItems([]);
-            }
-          },"Delete Selected"),
-
-          React.createElement("select", {
-            className:"border p-1",
-            onChange:(e)=>{
-              const cat = e.target.value;
-              if(!cat || selectedItems.length===0) return;
-              setExpenses(prev=>prev.map((item,idx)=>
-                selectedItems.includes(idx) ? { ...item, category: cat } : item
-              ));
-              setSelectedItems([]);
-            }
-          },
-            React.createElement("option", { value:"" }, "Bulk Category"),
-            categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+          React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+            React.createElement("div", { className: "text-sm text-gray-500" }, "Today"),
+            React.createElement("div", { className: "text-2xl font-bold text-green-600" }, `$${todayTotal.toFixed(2)}`)
+          ),
+          React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+            React.createElement("div", { className: "text-sm text-gray-500" }, "Top Category"),
+            React.createElement("div", { className: "text-lg font-bold" }, topCategory ? `${topCategory[0]} ($${topCategory[1].toFixed(2)})` : "—")
           )
         ),
 
-        // 🔥 SELECT ALL
-        React.createElement("div", { className:"flex items-center mb-2 gap-2" },
-          React.createElement("input", {
-            type:"checkbox",
-            checked: filteredExpenses.length > 0 && selectedItems.length === filteredExpenses.length,
-            onChange:(e)=>{
-              if(e.target.checked){
-                setSelectedItems(filteredExpenses.map(e=>expenses.findIndex(x=>x===e)));
-              } else {
+        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
+          React.createElement("input", { type: "date", value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
+          React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
+          React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
+          React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
+          React.createElement("select", {
+            value: form.category,
+            onChange: e => setForm({ ...form, category: e.target.value }),
+            className: "border p-2 mr-2"
+          },
+            React.createElement("option", { value: "" }, "Category"),
+            categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+          ),
+          React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
+        ),
+
+        React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+          React.createElement("div", { className: "font-bold mb-2" }, "Items"),
+
+          React.createElement("div", { className:"flex items-center gap-3 mb-3" },
+            React.createElement("button", {
+              className:"bg-red-600 text-white px-3 py-1 rounded",
+              onClick:()=>{
+                if(selectedItems.length===0) return;
+                setExpenses(expenses.filter((_,idx)=>!selectedItems.includes(idx)));
                 setSelectedItems([]);
               }
-            }
-          }),
-          React.createElement("span", { className:"text-sm font-medium" }, "Select All")
-        ),
+            },"Delete Selected")
+          ),
 
- 
+          filteredExpenses.map((e,i)=>{
+            const originalIndex = expenses.findIndex(x => x === e);
+            const isSelected = selectedItems.includes(originalIndex);
+
+            return React.createElement("div", { key:i, className:"flex justify-between items-center border-b py-1" },
+              React.createElement("div", { className:"flex items-center gap-2" },
+                React.createElement("input", {
+                  type:"checkbox",
+                  checked:isSelected,
+                  onChange:()=>{
+                    if(isSelected){
+                      setSelectedItems(selectedItems.filter(id=>id!==originalIndex));
+                    } else {
+                      setSelectedItems([...selectedItems, originalIndex]);
+                    }
+                  }
+                }),
+                React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount}`)
+              ),
+              React.createElement("div", { className:"flex gap-2" },
+                React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
+                React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
+              )
+            );
+          })
+        )
+      );
+    }
+
+    return React.createElement(DashboardView);
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(ExpenseTracker));
+  </script>
+</body>
+</html>

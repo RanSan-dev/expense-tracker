@@ -617,7 +617,7 @@ Budget: $${totalBudget.toFixed(2)}`);
             categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
           ),
           React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
-        
+        ),
 
         // 🔥 CSV IMPORT
         React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
@@ -630,7 +630,7 @@ Budget: $${totalBudget.toFixed(2)}`);
               const reader = new FileReader();
               reader.onload = (evt) => {
                 const text = evt.target.result;
-                const rows = text.split("
+                const rows = (text || "").split("
 ").slice(1);
                 const parsed = rows.map(r => {
                   const cols = r.split(",");

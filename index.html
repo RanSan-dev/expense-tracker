@@ -633,9 +633,24 @@ Budget: $${totalBudget.toFixed(2)}`);
                 const rows = (text || "").split("\n").slice(1);
                 const parsed = rows.map(r => {
                   const cols = r.split(",");
+
+                  let rawDate = (cols[0] || "").trim();
+                  let formattedDate = rawDate;
+
+                  // 🔥 FIX DATE FORMAT (MM/DD/YYYY → YYYY-MM-DD)
+                  if (rawDate.includes("/")) {
+                    const parts = rawDate.split("/");
+                    if (parts.length === 3) {
+                      const mm = parts[0].padStart(2, "0");
+                      const dd = parts[1].padStart(2, "0");
+                      const yyyy = parts[2];
+                      formattedDate = `${yyyy}-${mm}-${dd}`;
+                    }
+                  }
+
                   return {
-                    date: cols[0],
-                    store: cols[1],
+                    date: formattedDate,
+                    store: (cols[1] || "").trim(),
                     amount: parseFloat(cols[2]) || 0,
                     category: ""
                   };

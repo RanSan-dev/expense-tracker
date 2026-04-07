@@ -44,6 +44,9 @@
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
     });
 
+    // 🔥 SELECTION STATE
+    const [selectedItems, setSelectedItems] = useState([]);
+
     // RECURRING (Auto Debits)
     const [ccDebits, setCcDebits] = useState(() => JSON.parse(localStorage.getItem("ccDebits")||"[]"));
     const [bankDebits, setBankDebits] = useState(() => JSON.parse(localStorage.getItem("bankDebits")||"[]"));
@@ -750,26 +753,56 @@ Budget: $${totalBudget.toFixed(2)}`);
         })
       ),
 
-      // LIST WITH DATES
+      // LIST WITH DATES + SELECTION
       React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
-        filteredExpenses.map((e,i)=>{
-          const originalIndex = expenses.findIndex(x => x === e);
-          return React.createElement("div", { key:i, className:"flex justify-between border-b py-1" },
-            React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount} ${e.category ? '('+e.category+')' : ''}`),
-            React.createElement("div", { className:"flex gap-2" },
-              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
-              React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
-            )
-          );
-        })
+
+        // 🔥 BULK ACTIONS BAR
+        React.createElement("div", { className:"flex items-center gap-3 mb-3" },
+          React.createElement("button", {
+            className:"bg-red-600 text-white px-3 py-1 rounded",
+            onClick:()=>{
+              if(selectedItems.length===0) return;
+              setExpenses(expenses.filter((_,idx)=>!selectedItems.includes(idx)));
+              setSelectedItems([]);
+            }
+          },"Delete Selected"),
+
+          React.createElement("select", {
+            className:"border p-1",
+            onChange:(e)=>{
+              const cat = e.target.value;
+              if(!cat || selectedItems.length===0) return;
+              setExpenses(prev=>prev.map((item,idx)=>
+                selectedItems.includes(idx) ? { ...item, category: cat } : item
+              ));
+              setSelectedItems([]);
+            }
+          },
+            React.createElement("option", { value:"" }, "Bulk Category"),
+            categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
+          )
+        ),
+
+        // 🔥 SELECT ALL
+        React.createElement("div", { className:"flex items-center mb-2 gap-2" },
+          React.createElement("input", {
+            type:"checkbox",
+            checked: filteredExpenses.length > 0 && selectedItems.length === filteredExpenses.length,
+            onChange:(e)=>{
+              if(e.target.checked){
+                setSelectedItems(filteredExpenses.map(e=>expenses.findIndex(x=>x===e)));
+              } else {
+                setSelectedItems([]);
+              }
+            }
+          }),
+          React.createElement("span", { className:"text-sm font-medium" }, "Select All")
+        
       )
     );
   }
 
-  window.onload = () => {
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(React.createElement(ExpenseTracker));
-  };
+  ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(ExpenseTracker));
   </script>
 </body>
 </html>

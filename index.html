@@ -617,20 +617,7 @@ Budget: $${totalBudget.toFixed(2)}`);
             categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
           ),
           React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
-        ), value: form.date, onChange: e => setForm({ ...form, date: e.target.value }), className: "border p-2 mr-2" }),
-          React.createElement("input", { list: "stores", placeholder: "Store", value: form.store, onChange: e => setForm({ ...form, store: e.target.value }), className: "border p-2 mr-2" }),
-          React.createElement("datalist", { id: "stores" }, storeList.map((s,i)=>React.createElement("option", { key:i, value:s }))),
-          React.createElement("input", { placeholder: "Amount", value: form.amount, onChange: e => setForm({ ...form, amount: e.target.value }), className: "border p-2 mr-2" }),
-          React.createElement("select", {
-            value: form.category,
-            onChange: e => setForm({ ...form, category: e.target.value }),
-            className: "border p-2 mr-2"
-          },
-            React.createElement("option", { value: "" }, "Category"),
-            categories.map((c,i)=>React.createElement("option", { key:i, value:c }, c))
-          ),
-          React.createElement("button", { onClick: handleSubmit, className: "bg-green-600 text-white px-3 py-2 rounded" }, editIndex !== null ? "Update" : "Add")
-        ),
+        
 
         // 🔥 CSV IMPORT
         React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },

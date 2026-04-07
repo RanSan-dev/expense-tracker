@@ -637,7 +637,6 @@ Budget: $${totalBudget.toFixed(2)}`);
                   let rawDate = (cols[0] || "").trim();
                   let formattedDate = rawDate;
 
-                  // 🔥 FIX DATE FORMAT (MM/DD/YYYY → YYYY-MM-DD)
                   if (rawDate.includes("/")) {
                     const parts = rawDate.split("/");
                     if (parts.length === 3) {
@@ -648,11 +647,36 @@ Budget: $${totalBudget.toFixed(2)}`);
                     }
                   }
 
+                  let store = (cols[1] || "").trim();
+
+                  // 🔥 APPLY VENDOR RULES
+                  const upper = store.toUpperCase();
+                  for (let rule of vendorRules) {
+                    if (!rule.match || !rule.replace) continue;
+                    const keywords = rule.match.split(",").map(k => k.trim().toUpperCase());
+                    if (keywords.some(k => upper.includes(k))) {
+                      store = rule.replace;
+                      break;
+                    }
+                  }
+
+                  // 🔥 APPLY CATEGORY RULES
+                  let category = "";
+                  const s = store.toUpperCase();
+                  for (let rule of categoryRules) {
+                    if (!rule.match || !rule.category) continue;
+                    const keys = rule.match.split(",").map(k => k.trim().toUpperCase());
+                    if (keys.some(k => s.includes(k))) {
+                      category = rule.category;
+                      break;
+                    }
+                  }
+
                   return {
                     date: formattedDate,
-                    store: (cols[1] || "").trim(),
+                    store: store,
                     amount: parseFloat(cols[2]) || 0,
-                    category: ""
+                    category: category
                   };
                 }).filter(r => r.date && r.store);
                 setPreview(parsed);

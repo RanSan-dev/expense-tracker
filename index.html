@@ -97,6 +97,15 @@
 
       const autoCategory = form.category || getCategory(form.store);
 
+      // 🔥 AUTO-LEARN CATEGORY
+      if (autoCategory && form.store) {
+        setCategoryRules(prev => {
+          const exists = prev.some(r => r.match.toUpperCase() === form.store.toUpperCase());
+          if (exists) return prev;
+          return [...prev, { match: form.store, category: autoCategory }];
+        });
+      }
+
       rememberStore(form.store);
 
       if (editIndex !== null) {
@@ -661,11 +670,22 @@ Budget: $${totalBudget.toFixed(2)}`);
         return "";
       };
 
+                  const category = getCategory(cleanStore);
+
+                  // 🔥 AUTO-LEARN CATEGORY (CSV)
+                  if (category && cleanStore) {
+                    setCategoryRules(prev => {
+                      const exists = prev.some(r => r.match.toUpperCase() === cleanStore.toUpperCase());
+                      if (exists) return prev;
+                      return [...prev, { match: cleanStore, category }];
+                    });
+                  }
+
                   return {
                     date,
                     store: cleanStore,
                     amount: cleanAmount,
-                    category: getCategory(cleanStore)
+                    category
                   };
                 }).filter(Boolean);
 

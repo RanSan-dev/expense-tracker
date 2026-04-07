@@ -704,7 +704,52 @@ Budget: $${totalBudget.toFixed(2)}`);
         }),
 
         preview.length > 0 && React.createElement("div", { className: "mt-3" },
-          preview.slice(0,5).map((p,i)=>React.createElement("div", { key:i, className:"text-sm" }, `${p.date} | ${p.store} | $${p.amount}`)),
+          React.createElement("div", { className:"font-semibold mb-2" }, "Review & Edit Before Import"),
+
+          preview.slice(0,20).map((p,i)=>
+            React.createElement("div", { key:i, className:"flex gap-2 mb-1 text-sm" },
+              React.createElement("input", {
+                value:p.date,
+                onChange:e=>{
+                  const updated=[...preview];
+                  updated[i]={...updated[i], date:e.target.value};
+                  setPreview(updated);
+                },
+                className:"border p-1 w-28"
+              }),
+              React.createElement("input", {
+                value:p.store,
+                onChange:e=>{
+                  const updated=[...preview];
+                  updated[i]={...updated[i], store:e.target.value};
+                  setPreview(updated);
+                },
+                className:"border p-1 w-40"
+              }),
+              React.createElement("input", {
+                value:p.amount,
+                onChange:e=>{
+                  const updated=[...preview];
+                  updated[i]={...updated[i], amount:parseFloat(e.target.value)||0};
+                  setPreview(updated);
+                },
+                className:"border p-1 w-24"
+              }),
+              React.createElement("select", {
+                value:p.category || "",
+                onChange:e=>{
+                  const updated=[...preview];
+                  updated[i]={...updated[i], category:e.target.value};
+                  setPreview(updated);
+                },
+                className:"border p-1"
+              },
+                React.createElement("option", { value:"" }, "Category"),
+                categories.map((c,ci)=>React.createElement("option", { key:ci, value:c }, c))
+              )
+            )
+          ),
+
           React.createElement("button", {
             className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
             onClick: () => {
@@ -799,37 +844,4 @@ Budget: $${totalBudget.toFixed(2)}`);
           React.createElement("span", { className:"text-sm font-medium" }, "Select All")
         ),
 
-        // 🔥 ITEM LIST
-        filteredExpenses.map((e,i)=>{
-          const originalIndex = expenses.findIndex(x => x === e);
-          const isSelected = selectedItems.includes(originalIndex);
-
-          return React.createElement("div", { key:i, className:"flex justify-between items-center border-b py-1" },
-            React.createElement("div", { className:"flex items-center gap-2" },
-              React.createElement("input", {
-                type:"checkbox",
-                checked:isSelected,
-                onChange:()=>{
-                  if(isSelected){
-                    setSelectedItems(selectedItems.filter(id=>id!==originalIndex));
-                  } else {
-                    setSelectedItems([...selectedItems, originalIndex]);
-                  }
-                }
-              }),
-              React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount} ${e.category ? '('+e.category+')' : ''}`)
-            ),
-            React.createElement("div", { className:"flex gap-2" },
-              React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
-              React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
-            )
-          );
-        })
-      )
-    );
-  }
-
-  ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(ExpenseTracker));(document.getElementById("root")).render(React.createElement(ExpenseTracker));
-  </script>
-</body>
-</html>
+ 

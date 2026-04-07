@@ -607,9 +607,6 @@ Budget: $${totalBudget.toFixed(2)}`);
               )
             );
           })
-              )
-            );
-          })
         ),
 
         React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow mb-4" },
@@ -639,7 +636,8 @@ Budget: $${totalBudget.toFixed(2)}`);
               const reader = new FileReader();
               reader.onload = (evt) => {
                 const text = evt.target.result;
-                const rows = (text || "").split("\n").slice(1);
+                const rows = (text || "").split("
+").slice(1);
                 const parsed = rows.map(r => {
                   const cols = r.split(",");
 
@@ -658,7 +656,6 @@ Budget: $${totalBudget.toFixed(2)}`);
 
                   let store = (cols[1] || "").trim();
 
-                  // 🔥 APPLY VENDOR RULES
                   const upper = store.toUpperCase();
                   for (let rule of vendorRules) {
                     if (!rule.match || !rule.replace) continue;
@@ -669,7 +666,6 @@ Budget: $${totalBudget.toFixed(2)}`);
                     }
                   }
 
-                  // 🔥 APPLY CATEGORY RULES
                   let category = "";
                   const s = store.toUpperCase();
                   for (let rule of categoryRules) {
@@ -773,14 +769,6 @@ Budget: $${totalBudget.toFixed(2)}`);
               React.createElement("div", null, e.category || ""),
               React.createElement("div", { className:"text-right" }, `$${(parseFloat(e.amount)||0).toFixed(2)}`),
               React.createElement("div", { className:"col-span-5 flex gap-2 justify-end" },
-                React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
-                React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
-              )
-            );
-          }),
-                React.createElement("span", null, `${e.date} | ${e.store} - $${e.amount}`)
-              ),
-              React.createElement("div", { className:"flex gap-2" },
                 React.createElement("button", { className:"text-blue-600", onClick:()=>{ setForm(e); setEditIndex(originalIndex); } }, "Edit"),
                 React.createElement("button", { className:"text-red-600", onClick:()=>{ setExpenses(expenses.filter((_,idx)=>idx!==originalIndex)); } }, "Delete")
               )

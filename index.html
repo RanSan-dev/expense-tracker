@@ -553,27 +553,34 @@ Budget: $${totalBudget.toFixed(2)}`);
 
     // 🔥 DASHBOARD VIEW COMPONENT
     function DashboardView() {
-      const todayStr = new Date().toISOString().slice(0,10);
-   
-      const restoreBackup = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const todayStr = new Date().toISOString().slice(0,10);
 
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    try {
-      const data = JSON.parse(evt.target.result);
+  const todayTotal = filteredExpenses
+    .filter(e => e.date === todayStr)
+    .reduce((s, e) => s + e.amount, 0);
 
-      setExpenses(data.expenses || []);
-      setCategories(data.categories || []);
-      setBudgets(data.budgets || {});
-      setVendorRules(data.vendorRules || []);
-      setCategoryRules(data.categoryRules || []);
-      setStoreList(data.storeList || []);
-      setIncome(data.income || []);
-      setCcDebits(data.ccDebits || []);
-      setBankDebits(data.bankDebits || []);
-    } catch (err) {
+  return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
+    nav,
+
+    React.createElement("input", {
+      type: "month",
+      value: selectedMonth,
+      onChange: e => setSelectedMonth(e.target.value),
+      className: "border p-2 mb-4"
+    }),
+
+    React.createElement("div", { className: "grid grid-cols-3 gap-4 mb-6" },
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+        React.createElement("div", { className: "text-sm text-gray-500" }, "Total"),
+        React.createElement("div", { className: "text-2xl font-bold" }, `$${total.toFixed(2)}`)
+      ),
+      React.createElement("div", { className: "bg-white p-4 rounded-2xl shadow" },
+        React.createElement("div", { className: "text-sm text-gray-500" }, "Today"),
+        React.createElement("div", { className: "text-2xl font-bold text-green-600" }, `$${todayTotal.toFixed(2)}`)
+      )
+    )
+  );
+} catch (err) {
       alert("Invalid backup file");
     }
   };

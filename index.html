@@ -577,6 +577,12 @@ Budget: $${totalBudget.toFixed(2)}`);
   };
 
   reader.readAsText(file);
+        React.createElement("input", {
+  type:"file",
+  accept:".json",
+  onChange: restoreBackup,
+  className:"mb-4"
+}),
 };
       const todayTotal = filteredExpenses.filter(e=>e.date===todayStr).reduce((s,e)=>s+e.amount,0);
 

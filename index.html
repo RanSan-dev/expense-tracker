@@ -701,7 +701,16 @@ Budget: $${totalBudget.toFixed(2)}`);
             React.createElement("button", {
               className: "mt-2 bg-blue-600 text-white px-3 py-1 rounded",
               onClick: () => {
-                setExpenses(prev => [...prev, ...preview]);
+                setExpenses(prev => {
+                  const existing = new Set(prev.map(e => `${e.date}|${e.store}|${e.amount}`));
+                  const deduped = preview.filter(p => {
+                    const key = `${p.date}|${p.store}|${p.amount}`;
+                    if (existing.has(key)) return false;
+                    existing.add(key);
+                    return true;
+                  });
+                  return [...prev, ...deduped];
+                });
                 setPreview([]);
               }
             }, "Import")

@@ -583,7 +583,7 @@ Budget: $${totalBudget.toFixed(2)}`);
   onChange: restoreBackup,
   className:"mb-4"
 }),
-;
+
       const todayTotal = filteredExpenses.filter(e=>e.date===todayStr).reduce((s,e)=>s+e.amount,0);
 
       const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {

@@ -133,9 +133,9 @@
         React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("reports") }, "Reports"),
         React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("setup") }, "Setup"),
         React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("autodebits") }, "Auto Debits"),
-        React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("income") }, "Income")
-      );
-    }
+        React.createElement("button", { className: "bg-gray-300 px-4 py-2 rounded", onClick: () => setView("income") }, "Income"          )
+        );
+      }
 
     const nav = React.createElement(NavBar, { setView });
 
@@ -153,8 +153,9 @@
       const expectedDaily = totalBudget / (days || 1);
       const actualDaily = total / (today || 1);
 
-      return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-        nav,
+      return React.createElement("div", { className: "bg-gray-100 min-h-screen" },
+        React.createElement("div", { className: "max-w-5xl mx-auto px-6 py-6" },
+          nav,
         React.createElement("div", { className: "mb-6" },
           React.createElement("div", { className: "text-2xl font-bold" }, `Monthly Report - ${selectedMonth}`),
           React.createElement("div", { className: "text-gray-500" }, "Clean summary for easy sharing")

@@ -586,8 +586,7 @@ Budget: $${totalBudget.toFixed(2)}`);
   className:"mb-4"
 }),
 
-        const cat = e.category || "Uncategorized";
-        const val = Math.abs(parseFloat(e.amount) || 0);
+                const val = Math.abs(parseFloat(e.amount) || 0);
         acc[cat] = (acc[cat] || 0) + val;
         return acc;
       }, {});

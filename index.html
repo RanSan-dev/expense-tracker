@@ -568,6 +568,30 @@ Budget: $${totalBudget.toFixed(2)}`);
 
       return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
         nav,
+                                 React.createElement("button", {
+  className:"bg-black text-white px-4 py-2 rounded mb-4",
+  onClick:()=>{
+    const data = {
+      expenses,
+      categories,
+      budgets,
+      vendorRules,
+      categoryRules,
+      storeList,
+      income,
+      ccDebits,
+      bankDebits
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "expense-backup.json";
+    a.click();
+  }
+}, "Download Backup")
 
         React.createElement("input", {
           type: "month",

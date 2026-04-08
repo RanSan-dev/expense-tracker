@@ -554,11 +554,7 @@ Budget: $${totalBudget.toFixed(2)}`);
     // 🔥 DASHBOARD VIEW COMPONENT
     function DashboardView() {
       const todayStr = new Date().toISOString().slice(0,10);
-                  
- const todayTotal = filteredExpenses
-  .filter(e => e.date === todayStr)
-  .reduce((s, e) => s + e.amount, 0);
-     
+   
       const restoreBackup = (e) => {
   const file = e.target.files[0];
   if (!file) return;

@@ -577,27 +577,12 @@ Budget: $${totalBudget.toFixed(2)}`);
       alert("Invalid backup file");
     }
   };
-
-        reader.readAsText(file);
-        React.createElement("input", {
-  type:"file",
-  accept:".json",
-  onChange: restoreBackup,
-  className:"mb-4"
-}),
-
-                const val = Math.abs(parseFloat(e.amount) || 0);
-        acc[cat] = (acc[cat] || 0) + val;
-        return acc;
-      }, {});
-
-      const totalAbs = Object.values(categoryTotalsDash).reduce((a,b)=>a+b,0);
-
-      const topCategory = Object.entries(categoryTotalsDash).sort((a,b)=>b[1]-a[1])[0];
-
-      return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
-        nav,
-        <button
+const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {
+  const cat = e.category || "Uncategorized";
+  const val = Math.abs(parseFloat(e.amount) || 0);
+  acc[cat] = (acc[cat] || 0) + val;
+  return acc;
+}, {});
   onClick={downloadBackup}
   className="bg-black text-white px-4 py-2 rounded mb-4"
 >

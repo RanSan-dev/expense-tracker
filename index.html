@@ -544,33 +544,17 @@ Budget: $${totalBudget.toFixed(2)}`);
     }
 
     // DASHBOARD (ULTIMATE)
-  
+    const todayStr = new Date().toISOString().slice(0,10);
+    const todayTotal = filteredExpenses.filter(e=>e.date===todayStr).reduce((s,e)=>s+e.amount,0);
+
+    const categoryTotalsDash = filteredExpenses.reduce((acc, e) => {
+      const cat = e.category || "Uncategorized";
+      acc[cat] = (acc[cat] || 0) + e.amount;
+      return acc;
+    }, {});
 
     const topCategory = Object.entries(categoryTotalsDash).sort((a,b)=>b[1]-a[1])[0];
-React.createElement("button", {
-  onClick: () => {
-    const data = {
-      expenses,
-      categories,
-      budgets,
-      vendorRules,
-      categoryRules,
-      storeList,
-      income,
-      ccDebits,
-      bankDebits
-    };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "expense-backup.json";
-    a.click();
-  },
-  className:"bg-black text-white px-4 py-2 rounded mb-4"
-}, "Download Backup"),
     return React.createElement("div", { className: "p-6 bg-gray-100 min-h-screen" },
       nav,
 
